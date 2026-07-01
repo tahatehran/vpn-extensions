@@ -2,17 +2,17 @@
 
 ## مقدمه | Introduction
 
-از علاقه شما برای مشارکت در پروژه MOVTIGROUP سپاسگزاریم. این مخزن صرفاً برای نمایش و مستندسازی طراحی ظاهری وب‌سایت می‌باشد و مشارکت‌های شما در بهبود قالب‌ها و اجزای بصری بسیار ارزشمند است.
+از علاقه شما برای مشارکت در پروژه MOVTIGROUP سپاسگزاریم. این مخزن شامل قالب وب‌سایت و افزونه VPN مرورگر می‌باشد و مشارکت‌های شما در بهبود قالب‌ها، اجزای بصری و افزونه بسیار ارزشمند است.
 
-We appreciate your interest in contributing to the MOVTIGROUP project. This repository is solely for showcasing and documenting the visual design of the website, and your contributions to improving templates and visual components are highly valued.
+We appreciate your interest in contributing to the MOVTIGROUP project. This repository contains the website template and VPN browser extension, and your contributions to improving templates, visual components, and the extension are highly valued.
 
 ## نحوه مشارکت | How to Contribute
 
 ### گزارش باگ‌ها | Reporting Bugs
 
-اگر باگی در قالب‌ها یا اجزای بصری مشاهده کردید:
+اگر باگی در قالب‌ها، اجزای بصری یا افزونه VPN مشاهده کردید:
 
-If you find a bug in the templates or visual components:
+If you find a bug in the templates, visual components, or VPN extension:
 
 1. به بخش [Issues](https://github.com/movtigroup/movtigroup/issues) مراجعه کنید
    Visit the [Issues](https://github.com/movtigroup/movtigroup/issues) section
@@ -25,9 +25,9 @@ If you find a bug in the templates or visual components:
 
 ### پیشنهاد بهبود | Suggesting Improvements
 
-برای پیشنهاد بهبودهای طراحی:
+برای پیشنهاد بهبودهای طراحی یا افزونه:
 
-To suggest design improvements:
+To suggest design improvements or extension features:
 
 1. در [Discussions](https://github.com/movtigroup/movtigroup/discussions) موضوع خود را مطرح کنید
    Raise your topic in [Discussions](https://github.com/movtigroup/movtigroup/discussions)
@@ -55,6 +55,8 @@ To submit changes:
 
 ## استانداردهای کدنویسی | Coding Standards
 
+### قالب وب‌سایت | Website Template
+
 - از HTML5 معنایی استفاده کنید
   Use semantic HTML5
 - از قراردادهای نام‌گذاری BEM یا مشابه آن پیروی کنید
@@ -66,6 +68,17 @@ To submit changes:
 - اندازه فایل‌ها را برای عملکرد وب بهینه نگه دارید
   Keep file sizes optimized for web performance
 
+### افزونه VPN | VPN Extension
+
+- از Manifest V3 برای Chrome/Edge استفاده کنید
+  Use Manifest V3 for Chrome/Edge
+- کد تمیز و مستند بنویسید
+  Write clean and documented code
+- از APIهای استاندارد مرورگر استفاده کنید
+  Use standard browser APIs
+- سازگاری با مرورگرهای مختلف را تست کنید
+  Test compatibility with different browsers
+
 ## پشتیبانی دو زبانه | Bilingual Support
 
 تمام محتوای کاربر-facing باید به هر دو زبان فارسی و انگلیسی در نظر گرفته شود.
@@ -76,6 +89,33 @@ All user-facing content should be provided in both Persian (Farsi) and English.
   Keep README.md (Persian) and README.en.md (English) updated
 - برای چیدمان‌های RTL/LTR از استایل‌های جداگانه استفاده کنید
   Use separate styles for RTL/LTR layouts
+
+## تست افزونه | Testing the Extension
+
+### نصب و تست | Installation & Testing
+
+1. فایل‌ها را دانلود کنید
+   Download the files
+2. مرورگر Chrome یا Edge را باز کنید
+   Open Chrome or Edge browser
+3. به صفحه extensions بروید
+   Go to the extensions page
+4. حالت Developer را فعال کنید
+   Enable Developer mode
+5. روی Load unpacked کلیک کنید
+   Click Load unpacked
+6. پوشه vpn-extension را انتخاب کنید
+   Select the vpn-extension folder
+
+### ساخت CRX | Building CRX
+
+```bash
+# اسکریپت را قابل اجرا کنید
+chmod +x build-crx.sh
+
+# ساخت برای همه مرورگرها
+./build-crx.sh all
+```
 
 ## سوالات | Questions
 

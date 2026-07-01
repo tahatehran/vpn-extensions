@@ -8,24 +8,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial repository structure with comprehensive documentation
-- Bilingual support (Persian/Farsi and English)
-- Comprehensive .gitignore for web projects
-- .dockerignore for containerized deployments
-- GitHub Actions workflow for Jekyll-based GitHub Pages deployment
-- FUNDING.yml with sponsorship links
+- VPN Browser Extension (Chrome, Edge, Firefox)
+- CRX build script for creating browser extensions
+- GitHub Actions workflow for automated releases
+- Version bump workflow
+- CRX build workflow for CI/CD
 
 ### Changed
-- Updated README.md and README.en.md with comprehensive project information
-- Enhanced AGENTS.md with detailed AI assistant guidelines
+- Updated all documentation to reflect VPN extension
+- Enhanced README files with extension installation guides
+- Improved project structure documentation
 
 ### Fixed
 - N/A
 
-## [1.0.0] - 2025-01-01
+## [1.0.0] - 2025-06-10
 
 ### Added
 - Initial release of MOVTIGROUP website template
 - Core visual design components
 - Responsive layout system
+- VPN Browser Extension
+  - Chrome support (CRX)
+  - Edge support (CRX)
+  - Firefox support (ZIP)
+- GitHub Actions workflows:
+  - Automated release with CRX building
+  - Version bump automation
+  - CI/CD for CRX builds
+- Bilingual support (Persian/Farsi and English)
+- Comprehensive documentation
 - MIT License
+
+### Changed
+- Updated README.md, README.fa.md, README.en.md, README.zh.md
+- Enhanced AGENTS.md with detailed AI assistant guidelines
+- Improved CHANGELOG with version history
+
+### Fixed
+- N/A
+
+## [0.9.0] - 2025-01-01
+
+### Added
+- Initial repository structure
+- Website template design
+- Documentation framework
+- Bilingual support system
+
+### Changed
+- N/A
+
+### Fixed
+- N/A

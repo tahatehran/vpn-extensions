@@ -4,9 +4,9 @@
 
 ### مقدمه | Introduction
 
-پروژه MOVTIGROUP تنها یک قالب وب‌سایت نیست؛ بلکه بازنمایی از هویت بصری، ارزش‌ها و رویکرد ما به طراحی دیجیتال است.
+پروژه MOVTIGROUP تنها یک قالب وب‌سایت نیست؛ بلکه بازنمایی از هویت بصری، ارزش‌ها و رویکرد ما به طراحی دیجیتال است. همچنین شامل افزونه VPN مرورگر می‌باشد که تجربه امن و مدرنی را برای کاربران فراهم می‌کند.
 
-The MOVTIGROUP project is not just a website template; it is a representation of our visual identity, values, and approach to digital design.
+The MOVTIGROUP project is not just a website template; it is a representation of our visual identity, values, and approach to digital design. It also includes a VPN browser extension that provides a secure and modern experience for users.
 
 ---
 
@@ -19,6 +19,7 @@ The MOVTIGROUP project is not just a website template; it is a representation of
 We believe that good design is simple design. Any element that doesn't add to the user experience should be removed.
 
 **در عمل | In practice:**
+
 - استفاده از فضای خالی به عنوان عنصر طراحی
   Use white space as a design element
 - حذف عناصر تزئینی غیرضروری
@@ -33,6 +34,7 @@ We believe that good design is simple design. Any element that doesn't add to th
 Every design decision should be made with the end user's needs in mind.
 
 **در عمل | In practice:**
+
 - طراحی برای تمام دستگاه‌ها و اندازه‌های صفحه
   Design for all devices and screen sizes
 - رعایت استانداردهای دسترس‌پذیری
@@ -47,6 +49,7 @@ Every design decision should be made with the end user's needs in mind.
 The template should be usable in any environment and compatible with various technologies.
 
 **در عمل | In practice:**
+
 - استفاده از استانداردهای وب باز (Open Web Standards)
   Use Open Web Standards
 - عدم وابستگی به فریم‌ورک‌های خاص
@@ -61,6 +64,7 @@ The template should be usable in any environment and compatible with various tec
 The template should be able to grow with the project and cover future needs.
 
 **در عمل | In practice:**
+
 - ساختار ماژولار و قابل تعمیر
   Modular and maintainable structure
 - مستندسازی کامل
@@ -75,6 +79,7 @@ The template should be able to grow with the project and cover future needs.
 Design should be both functional and visually appealing and professional.
 
 **در عمل | In practice:**
+
 - استفاده از تایپوگرافی مناسب
   Use appropriate typography
 - هماهنگی رنگ‌ها
@@ -125,15 +130,28 @@ Complete and up-to-date documentation is an integral part of this project.
 - **Examples:** مثال‌های عملی برای استفاده
   Practical usage examples
 
+### امنیت و حریم خصوصی | Security & Privacy
+
+امنیت کاربران اولویت اصلی ماست. افزونه VPN ما بدون ذخیره اطلاعات شخصی کاربران کار می‌کند.
+
+User security is our main priority. Our VPN extension works without storing users' personal information.
+
+- **No Logging:** هیچ اطلاعاتی ذخیره نمی‌شود
+  No information is stored
+- **Open Source:** کد منبع باز و قابل بررسی
+  Open source code
+- **Regular Updates:** بروزرسانی‌های منظم امنیتی
+  Regular security updates
+
 ---
 
 ## چشم‌انداز | Vision
 
 ### هدف نهایی | Ultimate Goal
 
-ایجاد قالبی که نه تنها نیازهای فعلی پروژه MOVTIGROUP را برآورده کند، بلکه به عنوان الگویی برای پروژه‌های دیگر نیز قابل استفاده باشد.
+ایجاد قالبی که نه تنها نیازهای فعلی پروژه MOVTIGROUP را برآورده کند، بلکه به عنوان الگویی برای پروژه‌های دیگر نیز قابل استفاده باشد. همچنین ارائه ابزارهای امنیتی مدرن مانند افزونه VPN.
 
-Creating a template that not only meets the current needs of the MOVTIGROUP project but can also serve as a model for other projects.
+Creating a template that not only meets the current needs of the MOVTIGROUP project but can also serve as a model for other projects. Also providing modern security tools like the VPN extension.
 
 ### ارزش‌ها | Values
 
@@ -145,6 +163,8 @@ Creating a template that not only meets the current needs of the MOVTIGROUP proj
   Collaboration: Open and constructive
 - **نوآوری:** به روز بودن با جدیدترین روش‌ها
   Innovation: Staying current with latest methods
+- **امنیت:** حفاظت از حریم خصوصی کاربران
+  Security: Protecting user privacy
 
 ---
 

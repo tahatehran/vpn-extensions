@@ -1,0 +1,137 @@
+name: Release & Build CRX
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-crx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install CRX tools
+        run: npm install -g crx
+
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' vpn-extension/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Create Chrome CRX
+        run: |
+          cd vpn-extension
+          # Generate private key if not exists
+          if [ ! -f "chrome.pem" ]; then
+            openssl genrsa -out chrome.pem 2048
+          fi
+          # Create CRX file
+          crx pack . -o ../movti-vpn-chrome-${{ steps.version.outputs.version }}.crx -p chrome.pem
+          echo "Chrome CRX created successfully"
+
+      - name: Create Edge CRX
+        run: |
+          cd vpn-extension
+          # Generate private key for Edge if not exists
+          if [ ! -f "edge.pem" ]; then
+            openssl genrsa -out edge.pem 2048
+          fi
+          # Create CRX file for Edge (same format as Chrome)
+          crx pack . -o ../movti-vpn-edge-${{ steps.version.outputs.version }}.crx -p edge.pem
+          echo "Edge CRX created successfully"
+
+      - name: Create ZIP for Firefox
+        run: |
+          cd vpn-extension
+          zip -r ../movti-vpn-firefox-${{ steps.version.outputs.version }}.zip . -x "*.pem"
+          echo "Firefox ZIP created successfully"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "MOVTI VPN Shield v${{ steps.version.outputs.version }}"
+          body: |
+            ## 🚀 MOVTI VPN Shield v${{ steps.version.outputs.version }}
+
+            ### 📦 Downloads
+            - **Chrome:** `movti-vpn-chrome-${{ steps.version.outputs.version }}.crx`
+            - **Edge:** `movti-vpn-edge-${{ steps.version.outputs.version }}.crx`
+            - **Firefox:** `movti-vpn-firefox-${{ steps.version.outputs.version }}.zip`
+
+            ### 📝 Installation Guide
+
+            #### Chrome:
+            1. Download the `.crx` file
+            2. Open `chrome://extensions/`
+            3. Enable **Developer mode**
+            4. Drag and drop the `.crx` file
+
+            #### Edge:
+            1. Download the `.crx` file
+            2. Open `edge://extensions/`
+            3. Enable **Developer mode**
+            4. Drag and drop the `.crx` file
+
+            #### Firefox:
+            1. Download the `.zip` file
+            2. Extract the contents
+            3. Open `about:debugging#/runtime/this-firefox`
+            4. Click **Load Temporary Add-on**
+            5. Select the `manifest.json` file
+          files: |
+            movti-vpn-chrome-*.crx
+            movti-vpn-edge-*.crx
+            movti-vpn-firefox-*.zip
+          draft: false
+          prerelease: false
+
+      - name: Upload CRX artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: crx-builds
+          path: |
+            movti-vpn-chrome-*.crx
+            movti-vpn-edge-*.crx
+            movti-vpn-firefox-*.zip
+
+  update-version:
+    runs-on: ubuntu-latest
+    needs: build-crx
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION=${{ needs.build-crx.outputs.version }}
+          DATE=$(date +%Y-%m-%d)
+          echo "## [$VERSION] - $DATE" >> CHANGELOG_TEMP.md
+          echo "" >> CHANGELOG_TEMP.md
+          echo "### Added" >> CHANGELOG_TEMP.md
+          echo "- Chrome CRX build" >> CHANGELOG_TEMP.md
+          echo "- Edge CRX build" >> CHANGELOG_TEMP.md
+          echo "- Firefox ZIP build" >> CHANGELOG_TEMP.md
+          echo "- Automated release workflow" >> CHANGELOG_TEMP.md
+          echo "" >> CHANGELOG_TEMP.md
+          cat CHANGELOG >> CHANGELOG_TEMP.md
+          mv CHANGELOG_TEMP.md CHANGELOG

@@ -1,0 +1,80 @@
+name: Build CRX Files
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install CRX tools
+        run: npm install -g crx
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' vpn-extension/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate Chrome private key
+        run: |
+          cd vpn-extension
+          if [ ! -f "chrome.pem" ]; then
+            openssl genrsa -out chrome.pem 2048
+          fi
+
+      - name: Generate Edge private key
+        run: |
+          cd vpn-extension
+          if [ ! -f "edge.pem" ]; then
+            openssl genrsa -out edge.pem 2048
+          fi
+
+      - name: Build Chrome CRX
+        run: |
+          cd vpn-extension
+          crx pack . -o "../movti-vpn-chrome-${{ steps.version.outputs.version }}.crx" -p chrome.pem
+
+      - name: Build Edge CRX
+        run: |
+          cd vpn-extension
+          crx pack . -o "../movti-vpn-edge-${{ steps.version.outputs.version }}.crx" -p edge.pem
+
+      - name: Build Firefox ZIP
+        run: |
+          cd vpn-extension
+          zip -r "../movti-vpn-firefox-${{ steps.version.outputs.version }}.zip" . -x "*.pem"
+
+      - name: Upload Chrome CRX
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-crx
+          path: movti-vpn-chrome-*.crx
+
+      - name: Upload Edge CRX
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-crx
+          path: movti-vpn-edge-*.crx
+
+      - name: Upload Firefox ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-zip
+          path: movti-vpn-firefox-*.zip

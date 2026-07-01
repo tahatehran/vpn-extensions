@@ -1,4 +1,4 @@
-ki# DESIGN.md - Design System Documentation
+# DESIGN.md - Design System Documentation
 
 ## Design Philosophy
 
@@ -7,22 +7,26 @@ MOVTIGROUP's visual identity is built on principles of modernity, clarity, and f
 ## Core Principles
 
 ### 1. Modern & Clean
+
 - Minimalist approach with ample white space
 - Clear visual hierarchy
 - Focus on content over decoration
 
 ### 2. Responsive First
+
 - Mobile-first design approach
 - Fluid layouts that adapt to all screen sizes
 - Touch-friendly interactive elements
 
 ### 3. Accessibility
+
 - WCAG 2.1 AA compliance
 - Sufficient color contrast ratios
 - Keyboard navigation support
 - Screen reader friendly markup
 
 ### 4. Performance
+
 - Optimized assets and code
 - Minimal dependencies
 - Fast load times
@@ -30,11 +34,13 @@ MOVTIGROUP's visual identity is built on principles of modernity, clarity, and f
 ## Color Palette
 
 ### Primary Colors
+
 - **Primary Blue:** `#2563EB` - Main brand color, CTAs, links
 - **Primary Dark:** `#1E40AF` - Hover states, emphasis
 - **Primary Light:** `#DBEAFE` - Backgrounds, highlights
 
 ### Neutral Colors
+
 - **Gray 900:** `#111827` - Headings, primary text
 - **Gray 700:** `#374151` - Body text
 - **Gray 500:** `#6B7280` - Secondary text
@@ -43,19 +49,31 @@ MOVTIGROUP's visual identity is built on principles of modernity, clarity, and f
 - **White:** `#FFFFFF` - Cards, containers
 
 ### Semantic Colors
+
 - **Success:** `#10B981` - Success messages
 - **Warning:** `#F59E0B` - Warnings
 - **Error:** `#EF4444` - Errors, destructive actions
 - **Info:** `#3B82F6` - Informational messages
 
+### VPN Extension Colors
+
+- **Background:** `#0a0e1a` - Dark background
+- **Card:** `#111827` - Card background
+- **Gradient Start:** `#2563EB` - Blue gradient start
+- **Gradient End:** `#1E40AF` - Blue gradient end
+- **Text Primary:** `#F9FAFB` - Primary text
+- **Text Secondary:** `#9CA3AF` - Secondary text
+
 ## Typography
 
 ### Font Families
+
 - **Primary (Persian):** Vazirmatn, IRANSans
 - **Primary (English):** Inter, system-ui, -apple-system
 - **Monospace:** JetBrains Mono, Fira Code
 
 ### Type Scale
+
 - **H1:** 3rem (48px) - Page titles
 - **H2:** 2.25rem (36px) - Section titles
 - **H3:** 1.875rem (30px) - Subsection titles
@@ -64,6 +82,7 @@ MOVTIGROUP's visual identity is built on principles of modernity, clarity, and f
 - **Small:** 0.875rem (14px) - Captions, labels
 
 ### Line Heights
+
 - **Headings:** 1.2
 - **Body:** 1.6
 - **Compact:** 1.4
@@ -83,12 +102,14 @@ Based on 8px grid:
 ## Layout
 
 ### Container Widths
+
 - **Mobile:** 100% (with 16px padding)
 - **Tablet:** 768px
 - **Desktop:** 1200px
 - **Wide:** 1440px
 
 ### Grid System
+
 - 12-column grid
 - 24px gutters
 - Responsive breakpoints:
@@ -99,6 +120,7 @@ Based on 8px grid:
 ## Components
 
 ### Buttons
+
 - **Primary:** Filled with primary color
 - **Secondary:** Outlined with border
 - **Ghost:** Transparent with hover state
@@ -106,12 +128,14 @@ Based on 8px grid:
 - **States:** default, hover, active, disabled, loading
 
 ### Cards
+
 - White background with subtle shadow
 - 8px border radius
 - 16px padding
 - Hover elevation effect
 
 ### Forms
+
 - Clear labels above inputs
 - 8px border radius
 - Focus ring with primary color
@@ -119,6 +143,7 @@ Based on 8px grid:
 - Success states in green
 
 ### Navigation
+
 - Sticky header on scroll
 - Mobile hamburger menu
 - Active state indicators
@@ -127,12 +152,14 @@ Based on 8px grid:
 ## RTL/LTR Support
 
 ### Persian (RTL)
+
 - Text alignment: right
 - Layout mirroring
 - Icon flipping where needed
 - Proper font rendering
 
 ### English (LTR)
+
 - Text alignment: left
 - Standard layout
 - Icon orientation
@@ -165,3 +192,25 @@ Based on 8px grid:
 - Light text: `#F9FAFB`
 - Adjusted color palette for contrast
 - Smooth transition between modes
+
+## VPN Extension Design
+
+### Popup Window
+
+- Width: 350px
+- Height: 500px
+- Dark theme with gradient accents
+- Smooth animations for connection states
+
+### Options Page
+
+- Full-width layout
+- Card-based settings sections
+- Toggle switches for boolean options
+- Dropdown selects for multiple choices
+
+### Icons
+
+- 16x16: Toolbar icon
+- 48x48: Extensions page
+- 128x128: Chrome Web Store
