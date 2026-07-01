@@ -1,10 +1,21 @@
 {
   "manifest_version": 3,
   "name": "MOVTI VPN Shield",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "فیلترشکن قدرتمند با رابط کاربری مدرن | Powerful VPN with Modern UI",
-  "permissions": ["proxy", "storage", "tabs", "activeTab", "alarms"],
-  "host_permissions": ["<all_urls>", "https://api.myip.com/*", "https://ipinfo.io/*", "http://ip-api.com/*"],
+  "permissions": [
+    "proxy",
+    "storage",
+    "tabs",
+    "activeTab",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://api.myip.com/*",
+    "https://ipinfo.io/*",
+    "http://ip-api.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },

@@ -191,4 +191,4 @@ Feel free to review the files in this repository to explore the visual design an
 
 ---
 
-**Version:** 1.0.0 | **Last Updated:** 2025-06-10
+**Version:** 1.0.1 | **Last Updated:** 2026-07-01
