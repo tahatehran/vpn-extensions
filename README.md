@@ -191,4 +191,4 @@ Feel free to review the extension files in this repository. For any suggestions 
 
 ---
 
-**Version:** 1.0.0 | **Last Updated:** 2025-06-10
+**Version:** 1.0.1 | **Last Updated:** 2026-07-01
