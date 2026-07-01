@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-06-10
 
 ### Added
-- Initial release of MOVTIGROUP website template
+- Initial release of MOVTIGROUP VPN extension
 - Core visual design components
 - Responsive layout system
 - VPN Browser Extension
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial repository structure
-- Website template design
+- VPN extension design
 - Documentation framework
 - Bilingual support system
 

@@ -1,18 +1,18 @@
-# MOVTIGROUP Website Template & VPN Extension
+# MOVTIGROUP VPN Extension
 
 [English](README.en.md) | [فارسی](README.fa.md) | [中文](README.zh.md)
 
-This repository contains the main website template and VPN browser extension for **MOVTIGROUP**. Its purpose is to showcase and document the visual design and layout of the website, representing the company's visual identity. Note that the operational code and backend logic are stored privately in a separate repository.
+This repository contains the main VPN browser extension for **MOVTIGROUP**. Its purpose is to showcase and document the visual design and layout of the website, representing the company's visual identity. Note that the operational code and backend logic are stored privately in a separate repository.
 
 **GitHub Repository:** [https://github.com/movtigroup/movtigroup/](https://github.com/movtigroup/movtigroup/)
 
 ## Introduction
 
-This template serves as the primary visual design for the MOVTIGROUP website. The focus is on delivering a modern, clean, and responsive user experience that reflects the brand identity through its visual components.
+This extension serves as the primary visual design for the MOVTIGROUP website. The focus is on delivering a modern, clean, and responsive user experience that reflects the brand identity through its visual components.
 
 ## Features
 
-### Website Template
+### VPN Extension
 
 - **Responsive Design:** Optimized for various devices including mobile, tablet, and desktop.
 - **Easy Customization:** Design elements can be easily adjusted to align with the company's visual identity.
@@ -92,7 +92,7 @@ movtigroup/
    cd movtigroup
    ```
 
-3. Open the template files in your browser or use a local server.
+3. Open the extension folder in your browser or use a local server.
 
 ### Building CRX Files
 
@@ -182,7 +182,7 @@ git push origin v1.0.0
 
 ## Usage
 
-Feel free to review the files in this repository to explore the visual design and layout of the website. For any suggestions or feedback to improve the template, please use the **Issues** section on GitHub or contact our team directly.
+Feel free to review the extension files in this repository. For any suggestions or feedback to improve the extension, please use the **Issues** section on GitHub or contact our team directly.
 
 ## Contact
 

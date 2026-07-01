@@ -2,17 +2,17 @@
 
 ## مقدمه | Introduction
 
-از علاقه شما برای مشارکت در پروژه MOVTIGROUP سپاسگزاریم. این مخزن شامل قالب وب‌سایت و افزونه VPN مرورگر می‌باشد و مشارکت‌های شما در بهبود قالب‌ها، اجزای بصری و افزونه بسیار ارزشمند است.
+از علاقه شما برای مشارکت در پروژه MOVTIGROUP سپاسگزاریم. این مخزن شامل افزونه VPN مرورگر می‌باشد و مشارکت‌های شما در بهبود افزونه‌ها، اجزای بصری و افزونه بسیار ارزشمند است.
 
-We appreciate your interest in contributing to the MOVTIGROUP project. This repository contains the website template and VPN browser extension, and your contributions to improving templates, visual components, and the extension are highly valued.
+We appreciate your interest in contributing to the MOVTIGROUP project. This repository contains the VPN browser extension, and your contributions to improving the extension and its components are highly valued.
 
 ## نحوه مشارکت | How to Contribute
 
 ### گزارش باگ‌ها | Reporting Bugs
 
-اگر باگی در قالب‌ها، اجزای بصری یا افزونه VPN مشاهده کردید:
+اگر باگی در افزونه VPN مشاهده کردید:
 
-If you find a bug in the templates, visual components, or VPN extension:
+If you find a bug in the VPN extension:
 
 1. به بخش [Issues](https://github.com/movtigroup/movtigroup/issues) مراجعه کنید
    Visit the [Issues](https://github.com/movtigroup/movtigroup/issues) section
@@ -55,7 +55,7 @@ To submit changes:
 
 ## استانداردهای کدنویسی | Coding Standards
 
-### قالب وب‌سایت | Website Template
+### افزونه VPN | VPN Extension
 
 - از HTML5 معنایی استفاده کنید
   Use semantic HTML5

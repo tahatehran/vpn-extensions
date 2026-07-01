@@ -4,7 +4,7 @@ This file provides guidelines for AI assistants (like Claude, Cursor, Copilot, e
 
 ## Project Overview
 
-MOVTIGROUP is a modern website template repository showcasing the visual design and layout of the MOVTIGROUP company website, along with a VPN browser extension. This is a **template and extension** repository - operational backend code and logic are maintained privately.
+MOVTIGROUP is a modern VPN extension repository showcasing the visual design and layout of the MOVTIGROUP company website, along with a VPN browser extension. This is a **extension** repository - operational backend code and logic are maintained privately.
 
 ## Repository Structure
 
@@ -47,7 +47,7 @@ movtigroup/
 
 ## Key Principles
 
-1. **Template & Extension Focus**: This repository contains visual design templates, layout components, and a VPN browser extension. Do NOT add backend logic, API endpoints, or operational code.
+1. **Extension Focus**: This repository contains VPN extension, layout components, and a VPN browser extension. Do NOT add backend logic, API endpoints, or operational code.
 
 2. **Design Consistency**: All changes must maintain the existing design language - modern, clean, and responsive.
 
@@ -59,12 +59,12 @@ movtigroup/
 
 ## Allowed Actions
 
-- Update and improve visual design templates
+- Update and improve VPN extension
 - Add new layout components and pages
 - Modify CSS/SCSS styles
 - Update documentation
 - Fix responsive design issues
-- Add new template variations
+- Add new extension variations
 - Update and improve the VPN extension
 - Add new features to the extension
 - Fix extension bugs
@@ -81,7 +81,7 @@ movtigroup/
 
 ## Coding Standards
 
-### Website Template
+### VPN Extension
 
 - Use semantic HTML5
 - Follow BEM or similar CSS naming conventions

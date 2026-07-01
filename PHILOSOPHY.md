@@ -4,9 +4,9 @@
 
 ### مقدمه | Introduction
 
-پروژه MOVTIGROUP تنها یک قالب وب‌سایت نیست؛ بلکه بازنمایی از هویت بصری، ارزش‌ها و رویکرد ما به طراحی دیجیتال است. همچنین شامل افزونه VPN مرورگر می‌باشد که تجربه امن و مدرنی را برای کاربران فراهم می‌کند.
+پروژه MOVTIGROUP تنها یک افزونه VPN نیست؛ بلکه بازنمایی از هویت بصری، ارزش‌ها و رویکرد ما به طراحی دیجیتال است. همچنین شامل افزونه VPN مرورگر می‌باشد که تجربه امن و مدرنی را برای کاربران فراهم می‌کند.
 
-The MOVTIGROUP project is not just a website template; it is a representation of our visual identity, values, and approach to digital design. It also includes a VPN browser extension that provides a secure and modern experience for users.
+The MOVTIGROUP project is not just a VPN extension; it is a representation of our visual identity, values, and approach to digital design. It also includes a VPN browser extension that provides a secure and modern experience for users.
 
 ---
 
@@ -44,9 +44,9 @@ Every design decision should be made with the end user's needs in mind.
 
 ### ۳. سازگاری | Compatibility
 
-قالب باید در هر محیطی قابل استفاده باشد و با فناوری‌های مختلف هماهنگ باشد.
+افزونه باید در هر محیطی قابل استفاده باشد و با فناوری‌های مختلف هماهنگ باشد.
 
-The template should be usable in any environment and compatible with various technologies.
+The extension should be usable in any environment and compatible with various technologies.
 
 **در عمل | In practice:**
 
@@ -59,9 +59,9 @@ The template should be usable in any environment and compatible with various tec
 
 ### ۴. توسعه‌پذیری | Scalability
 
-قالب باید بتواند با رشد پروژه توسعه یابد و نیازهای آینده را پوشش دهد.
+افزونه باید بتواند با رشد پروژه توسعه یابد و نیازهای آینده را پوشش دهد.
 
-The template should be able to grow with the project and cover future needs.
+The extension should be able to grow with the project and cover future needs.
 
 **در عمل | In practice:**
 
@@ -149,9 +149,9 @@ User security is our main priority. Our VPN extension works without storing user
 
 ### هدف نهایی | Ultimate Goal
 
-ایجاد قالبی که نه تنها نیازهای فعلی پروژه MOVTIGROUP را برآورده کند، بلکه به عنوان الگویی برای پروژه‌های دیگر نیز قابل استفاده باشد. همچنین ارائه ابزارهای امنیتی مدرن مانند افزونه VPN.
+ایجاد افزونه‌ای که نه تنها نیازهای فعلی پروژه MOVTIGROUP را برآورده کند، بلکه به عنوان الگویی برای پروژه‌های دیگر نیز قابل استفاده باشد. همچنین ارائه ابزارهای امنیتی مدرن مانند افزونه VPN.
 
-Creating a template that not only meets the current needs of the MOVTIGROUP project but can also serve as a model for other projects. Also providing modern security tools like the VPN extension.
+Creating an extension that not only meets the current needs of the MOVTIGROUP project but can also serve as a model for other projects. Also providing modern security tools like the VPN extension.
 
 ### ارزش‌ها | Values
 
@@ -174,6 +174,6 @@ Creating a template that not only meets the current needs of the MOVTIGROUP proj
 
 This project is the manifestation of the balance between art and technology, between beauty and functionality, and between tradition and innovation.
 
-**ما فقط یک قالب نمی‌سازیم؛ ما تجربه‌ای خلق می‌کنیم.**
+**ما فقط یک افزونه نمی‌سازیم؛ ما تجربه‌ای خلق می‌کنیم.**
 
-**We are not just building a template; we are creating an experience.**
+**We are not just building an extension; we are creating an experience.**

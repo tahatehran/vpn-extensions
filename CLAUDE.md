@@ -4,14 +4,14 @@ This file provides context and guidelines for Claude Code when working with the 
 
 ## Project Context
 
-**Project Name:** MOVTIGROUP Website Template & VPN Extension
-**Type:** Static Website Template / Design System / Browser Extension
-**Primary Languages:** HTML, CSS, JavaScript (template & extension)
+**Project Name:** MOVTIGROUP VPN Extension
+**Type:** Static VPN Extension / Design System / Browser Extension
+**Primary Languages:** HTML, CSS, JavaScript (extension)
 **Bilingual:** Persian (Farsi) + English (RTL + LTR)
 
 ## Important Constraints
 
-1. **Template & Extension Repository**: This is a visual design template repository with a VPN browser extension. Do NOT add:
+1. **Extension Repository**: This is a visual design extension repository with a VPN browser extension. Do NOT add:
    - Backend code (Node.js, Python, PHP, etc.) except for build scripts
    - API endpoints or routes
    - Database connections or models
@@ -27,13 +27,13 @@ This file provides context and guidelines for Claude Code when working with the 
 
 ## Allowed Modifications
 
-### Website Template
+### VPN Extension
 
 - HTML structure and markup
 - CSS/SCSS styling and responsive design
 - JavaScript for UI interactions (no backend)
 - Documentation updates (both Persian and English)
-- New template pages and components
+- New extension features and options pages
 - Accessibility improvements (WCAG 2.1)
 
 ### VPN Extension
@@ -47,7 +47,7 @@ This file provides context and guidelines for Claude Code when working with the 
 
 ## File Organization
 
-### Website Template
+### VPN Extension
 
 - Keep CSS modular and organized by component
 - Use BEM or similar naming conventions

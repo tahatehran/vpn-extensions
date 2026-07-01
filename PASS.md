@@ -23,7 +23,7 @@ If you discover a security vulnerability in this repository, please report it pr
 
 This repository is publicly accessible and contains:
 
-- Visual design templates
+- VPN extension
 - Layout components
 - VPN browser extension (open source)
 - Documentation
@@ -60,7 +60,7 @@ This repository should NOT contain:
 - Internal server IPs
 - VPN credentials or server keys
 
-### Template Placeholders
+### Extension Placeholders
 
 در صورت نیاز به نمایش داده‌های نمونه، از placeholderهای امن استفاده کنید:
 
@@ -142,8 +142,8 @@ Our VPN extension supports the following security:
 
 - اطلاعات شخصی در این مخزن جمع‌آوری نمی‌شود
   No personal information is collected in this repository
-- از سرویس‌های شخص‌ساز (tracking) در قالب‌ها استفاده نشود
-  No tracking services should be used in templates
+- از سرویس‌های شخص‌ساز (tracking) در افزونه استفاده نشود
+  No tracking services should be used in the extension
 - افزونه VPN اطلاعات کاربران را ذخیره نمی‌کند
   VPN extension does not store user data
 
