@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOVTI VPN - تنظیمات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-app">
+    <!-- Header -->
+    <header class="options-header">
+      <div class="options-logo">
+        <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+          <defs>
+            <linearGradient id="optLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#60A5FA"/>
+              <stop offset="100%" style="stop-color:#3B82F6"/>
+            </linearGradient>
+          </defs>
+          <path d="M16 2L4 8v8c0 7.732 5.12 14.96 12 16.8 6.88-1.84 12-9.068 12-16.8V8L16 2z" fill="url(#optLogoGrad)" opacity="0.9"/>
+          <path d="M16 4l9.6 4.8v7.2c0 6.504-4.192 12.56-9.6 14.24-5.408-1.68-9.6-7.736-9.6-14.24V8.8L16 4z" fill="#1E3A5F"/>
+          <path d="M16 8l6 3v4.8c0 4.4-2.8 8.52-6 9.6-3.2-1.08-6-5.2-6-9.6v-4.8l6-3z" fill="url(#optLogoGrad)"/>
+          <circle cx="16" cy="15" r="3" fill="white" opacity="0.9"/>
+        </svg>
+        <div>
+          <h1>MOVTI VPN Shield</h1>
+          <span class="header-sub">تنظیمات پیشرفته</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats Banner -->
+    <div class="stats-banner" id="stats-banner">
+      <div class="banner-item">
+        <span class="banner-value" id="stat-total">--</span>
+        <span class="banner-label">کل سرورها</span>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-item">
+        <span class="banner-value" id="stat-working">--</span>
+        <span class="banner-label">سرور فعال</span>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-item">
+        <span class="banner-value" id="stat-countries">--</span>
+        <span class="banner-label">کشور</span>
+      </div>
+      <div class="banner-divider"></div>
+      <div class="banner-item">
+        <span class="banner-value" id="stat-last-update">--</span>
+        <span class="banner-label">آخرین بروزرسانی</span>
+      </div>
+    </div>
+
+    <main class="options-main">
+      <!-- General Settings -->
+      <section class="settings-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          تنظیمات عمومی
+        </h2>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">اتصال خودکار</span>
+            <span class="setting-desc">اتصال خودکار هنگام باز کردن مرورگر</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="auto-connect">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">کیل سوئیچ</span>
+            <span class="setting-desc">قطع اینترنت در صورت قطع اتصال VPN</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="kill-switch">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">تست پینگ خودکار</span>
+            <span class="setting-desc">اندازه‌گیری پینگ واقعی سرورها از سیستم شما</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="auto-ping" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">فقط سرورهای فعال</span>
+            <span class="setting-desc">فقط سرورهایی که واقعاً پاسخ می‌دهند نمایش داده شوند</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="working-only" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Connection Settings -->
+      <section class="settings-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          تنظیمات اتصال
+        </h2>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">انتخاب خودکار سرور</span>
+            <span class="setting-desc">اتصال به سرور با کمترین پینگ</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="auto-select" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">تایم‌اوت اتصال</span>
+            <span class="setting-desc">حداکثر زمان انتظار برای اتصال (ثانیه)</span>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="timeout" min="3" max="15" value="5" class="range-input">
+            <span class="range-value" id="timeout-value">5 ثانیه</span>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">حداکثر پینگ مجاز</span>
+            <span class="setting-desc">سرورهای با پینگ بیشتر نمایش داده نشوند</span>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="max-ping" min="100" max="2000" value="1000" step="100" class="range-input">
+            <span class="range-value" id="max-ping-value">1000ms</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- DNS Settings -->
+      <section class="settings-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          تنظیمات DNS
+        </h2>
+
+        <div class="dns-options">
+          <label class="dns-option">
+            <input type="radio" name="dns" value="default" checked>
+            <span class="dns-card">
+              <span class="dns-icon">🌐</span>
+              <span class="dns-name">پیش‌فرض</span>
+              <span class="dns-value">DNS سیستم</span>
+            </span>
+          </label>
+          <label class="dns-option">
+            <input type="radio" name="dns" value="cloudflare">
+            <span class="dns-card">
+              <span class="dns-icon">☁️</span>
+              <span class="dns-name">Cloudflare</span>
+              <span class="dns-value">1.1.1.1</span>
+            </span>
+          </label>
+          <label class="dns-option">
+            <input type="radio" name="dns" value="google">
+            <span class="dns-card">
+              <span class="dns-icon">🔍</span>
+              <span class="dns-name">Google</span>
+              <span class="dns-value">8.8.8.8</span>
+            </span>
+          </label>
+          <label class="dns-option">
+            <input type="radio" name="dns" value="opendns">
+            <span class="dns-card">
+              <span class="dns-icon">🛡️</span>
+              <span class="dns-name">OpenDNS</span>
+              <span class="dns-value">208.67.222.222</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Server Management -->
+      <section class="settings-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          مدیریت سرورها
+        </h2>
+
+        <div class="proxy-info">
+          <div class="info-row">
+            <span class="info-label">منبع داده:</span>
+            <code>best_proxies.json</code>
+          </div>
+          <div class="info-row">
+            <span class="info-label">تعداد سرورها:</span>
+            <span id="proxy-count">در حال بارگذاری...</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">بروزرسانی خودکار:</span>
+            <span>هر 24 ساعت</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">تست پینگ:</span>
+            <span>از سیستم شما</span>
+          </div>
+        </div>
+
+        <div class="proxy-actions">
+          <button class="btn-primary" id="btn-test-all">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            تست تمام سرورها
+          </button>
+          <button class="btn-secondary" id="btn-update-proxies">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            بروزرسانی لیست
+          </button>
+          <button class="btn-secondary" id="btn-export-proxies">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            خروجی
+          </button>
+        </div>
+
+        <!-- Test Progress -->
+        <div class="test-progress" id="test-progress" style="display:none;">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span class="progress-text" id="progress-text">در حال تست...</span>
+        </div>
+
+        <!-- Server Results -->
+        <div class="server-results" id="server-results" style="display:none;">
+          <h3>نتایج تست</h3>
+          <div id="results-list"></div>
+        </div>
+      </section>
+
+      <!-- Reset -->
+      <section class="settings-section danger-section">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          خطرناک
+        </h2>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">بازنشانی تمام تنظیمات</span>
+            <span class="setting-desc">تمام تنظیمات به حالت پیش‌فرض برگردانده می‌شود</span>
+          </div>
+          <button class="btn-danger" id="btn-reset">بازنشانی</button>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="settings-section about-section">
+        <div class="about-content">
+          <h3>MOVTI VPN Shield</h3>
+          <p>نسخه 1.0.0</p>
+          <p class="about-desc">فیلترشکن قدرتمند با رابط کاربری مدرن</p>
+          <div class="about-links">
+            <a href="https://github.com/movtigroup" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              GitHub
+            </a>
+            <a href="https://movtigroup.com" target="_blank">وبسایت</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

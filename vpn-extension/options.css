@@ -1,0 +1,490 @@
+/* ============================================
+   MOVTI VPN Shield - Options Page Styles
+   ============================================ */
+
+:root {
+  --primary: #3B82F6;
+  --primary-light: #60A5FA;
+  --primary-dark: #2563EB;
+  --primary-glow: rgba(59, 130, 246, 0.3);
+  --primary-gradient: linear-gradient(135deg, #3B82F6, #2563EB);
+  --bg-primary: #0A0E1A;
+  --bg-secondary: #111827;
+  --bg-card: #1E293B;
+  --bg-card-hover: #253449;
+  --bg-input: #0F172A;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --border: rgba(148, 163, 184, 0.1);
+  --border-active: rgba(59, 130, 246, 0.5);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', 'Vazirmatn', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  direction: rtl;
+}
+
+.options-app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* Header */
+.options-header {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.options-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.options-logo h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Stats Banner */
+.stats-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.banner-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.banner-value {
+  font-size: 24px;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.banner-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.banner-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* Sections */
+.settings-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.section-title svg { color: var(--primary-light); }
+
+/* Setting Items */
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+.setting-item:last-child { border-bottom: none; }
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.setting-label { font-size: 14px; font-weight: 600; }
+.setting-desc { font-size: 12px; color: var(--text-muted); }
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Range Input */
+.range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background: var(--bg-card);
+  border-radius: 2px;
+  outline: none;
+}
+
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+.range-value {
+  font-size: 12px;
+  color: var(--primary-light);
+  font-weight: 600;
+  min-width: 60px;
+  text-align: left;
+  direction: ltr;
+}
+
+/* Toggle Switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  right: 3px; bottom: 2px;
+  background: var(--text-muted);
+  border-radius: 4px;
+  transition: all var(--transition-normal);
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(-22px);
+  background: white;
+}
+
+/* DNS Options */
+.dns-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.dns-option { cursor: pointer; }
+.dns-option input { display: none; }
+
+.dns-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.dns-icon { font-size: 20px; }
+
+.dns-option input:checked + .dns-card {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dns-card:hover { border-color: var(--border-active); }
+.dns-name { font-size: 14px; font-weight: 600; }
+.dns-value {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  direction: ltr;
+}
+
+/* Proxy Info */
+.proxy-info {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.info-row + .info-row { border-top: 1px solid var(--border); }
+.info-label { color: var(--text-muted); }
+
+.proxy-info code {
+  background: var(--bg-input);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--primary-light);
+}
+
+/* Buttons */
+.proxy-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-active);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--error);
+}
+
+/* Test Progress */
+.test-progress {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Server Results */
+.server-results {
+  margin-top: 16px;
+}
+
+.server-results h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.result-status {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.result-status.ping-good { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.result-status.ping-medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.result-status.ping-bad { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+
+.result-ip {
+  flex: 1;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  direction: ltr;
+  text-align: right;
+}
+
+.result-ping { font-weight: 600; min-width: 60px; text-align: left; direction: ltr; }
+.result-json { font-size: 11px; color: var(--text-muted); min-width: 80px; text-align: left; direction: ltr; }
+
+/* Danger Section */
+.danger-section {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* About */
+.about-section { text-align: center; }
+
+.about-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.about-content p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.about-desc {
+  margin-top: 8px !important;
+  color: var(--text-secondary) !important;
+}
+
+.about-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.about-links a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary-light);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.about-links a:hover { color: var(--primary); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
