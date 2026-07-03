@@ -10,6 +10,15 @@ const PROXY_SOURCE =
 // IP check URL for connection verification
 const IP_CHECK_URL = "https://api.myip.com";
 
+// Helper: check if currently connected
+async function isConnected() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["connected"], (data) => {
+      resolve(data.connected === true);
+    });
+  });
+}
+
 // Install handler
 chrome.runtime.onInstalled.addListener((details) => {
   console.log("MOVTI VPN Shield installed:", details.reason);
@@ -35,9 +44,14 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 // Startup handler - schedule alarm on browser start
-chrome.runtime.onStartup.addListener(() => {
+chrome.runtime.onStartup.addListener(async () => {
   setupDailyAlarm();
-  checkAndUpdateProxies();
+  const connected = await isConnected();
+  if (!connected) {
+    checkAndUpdateProxies();
+  } else {
+    console.log("VPN is connected, skipping proxy update on startup");
+  }
 });
 
 // Setup daily alarm (every 24 hours)
@@ -48,8 +62,14 @@ function setupDailyAlarm() {
   console.log("Daily proxy update alarm scheduled");
 }
 
-// Check if update is needed (older than 24h)
-function checkAndUpdateProxies() {
+// Check if update is needed (older than 24h) - skip if connected
+async function checkAndUpdateProxies() {
+  const connected = await isConnected();
+  if (connected) {
+    console.log("VPN is connected, skipping proxy update check");
+    return;
+  }
+
   chrome.storage.local.get(["lastUpdate"], (data) => {
     if (!data.lastUpdate) {
       fetchAndUpdateProxies();
@@ -110,9 +130,14 @@ async function fetchAndUpdateProxies() {
   }
 }
 
-// Alarm handler
-chrome.alarms.onAlarm.addListener((alarm) => {
+// Alarm handler - skip if connected
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "dailyProxyUpdate") {
+    const connected = await isConnected();
+    if (connected) {
+      console.log("VPN is connected, skipping scheduled proxy update");
+      return;
+    }
     console.log("Daily proxy update triggered");
     fetchAndUpdateProxies();
   }
@@ -141,7 +166,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ["connected", "selectedServer", "lastUpdate"],
       (data) => {
         sendResponse(data);
-      }
+      },
     );
     return true;
   }
@@ -172,7 +197,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       },
       () => {
         sendResponse({ success: true });
-      }
+      },
     );
     return true;
   }
@@ -185,7 +210,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       },
       () => {
         sendResponse({ success: true });
-      }
+      },
     );
     return true;
   }
@@ -296,7 +321,7 @@ async function connectToServer(server) {
           chrome.storage.local.set({ connected: false });
           reject(new Error("Connection verification failed"));
         }
-      }
+      },
     );
   });
 }

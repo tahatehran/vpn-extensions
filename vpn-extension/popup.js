@@ -292,6 +292,18 @@ function needsRefresh() {
 
 // Fetch servers from JSON + real ping test
 async function fetchServers(force) {
+  // If connected, skip fetching to avoid going through VPN
+  if (state.connected) {
+    console.log(
+      "VPN is connected, skipping server fetch to avoid VPN interference",
+    );
+    if (state.servers.length > 0) {
+      renderServerList();
+      updateServerCount();
+    }
+    return;
+  }
+
   if (!force && state.servers.length > 0 && !needsRefresh()) {
     renderServerList();
     updateServerCount();
@@ -812,7 +824,10 @@ function updateUI() {
     el.statusLabel.textContent = "در حال اتصال...";
   } else {
     el.statusLabel.textContent = "غیرفعال";
-    if (!el.statusSub.textContent || el.statusSub.textContent === "برای اتصال کلیک کنید") {
+    if (
+      !el.statusSub.textContent ||
+      el.statusSub.textContent === "برای اتصال کلیک کنید"
+    ) {
       el.statusSub.textContent = "برای اتصال کلیک کنید";
     }
   }
