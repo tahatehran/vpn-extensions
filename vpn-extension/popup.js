@@ -114,9 +114,6 @@ const COUNTRY_NAMES = {
   LU: "لوکزامبورگ",
   CY: "قبرس",
   MT: "مالت",
-  JP: "ژاپن",
-  CN: "چین",
-  TW: "تایوان",
 };
 
 // Get country from IP using ipinfo.io (CORS-friendly)
