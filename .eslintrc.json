@@ -1,0 +1,61 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "webextensions": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-undef": "warn",
+    "no-unused-vars": ["warn", { "args": "none" }],
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-unreachable": "warn",
+    "no-constant-condition": "warn",
+    "no-empty": ["warn", { "allowEmptyCatch": true }],
+    "no-extra-semi": "warn",
+    "no-redeclare": "error",
+    "eqeqeq": ["warn", "smart"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-shadow-restricted-names": "error",
+    "no-debugger": "warn",
+    "no-alert": "warn",
+    "no-var": "off",
+    "semi": ["warn", "always"],
+    "no-mixed-spaces-and-tabs": "warn"
+  },
+  "globals": {
+    "chrome": "readonly",
+    "performance": "readonly",
+    "fetch": "readonly",
+    "AbortController": "readonly",
+    "Set": "readonly",
+    "Map": "readonly",
+    "Promise": "readonly",
+    "console": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+    "setInterval": "readonly",
+    "clearInterval": "readonly",
+    "Date": "readonly",
+    "Math": "readonly",
+    "JSON": "readonly",
+    "parseInt": "readonly",
+    "parseFloat": "readonly",
+    "URL": "readonly",
+    "Blob": "readonly",
+    "document": "readonly",
+    "window": "readonly",
+    "localStorage": "readonly",
+    "String": "readonly",
+    "Array": "readonly",
+    "Object": "readonly",
+    "confirm": "readonly",
+    "alert": "readonly"
+  }
+}

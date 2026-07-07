@@ -1,0 +1,280 @@
+name: Test & Validate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  # ──────────────────────────────────────────
+  # Job 1: Lint JavaScript Files
+  # ──────────────────────────────────────────
+  lint:
+    name: 🔍 Lint JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+  # ──────────────────────────────────────────
+  # Job 2: Validate manifest.json
+  # ──────────────────────────────────────────
+  manifest-validation:
+    name: 📋 Validate Manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate manifest.json
+        run: node tests/validate-manifest.js
+
+  # ──────────────────────────────────────────
+  # Job 3: Unit Tests with Jest
+  # ──────────────────────────────────────────
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    needs: [manifest-validation]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test -- --ci --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ──────────────────────────────────────────
+  # Job 4: Security Check
+  # ──────────────────────────────────────────
+  security-check:
+    name: 🔒 Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan for secrets and credentials
+        run: |
+          echo "🔍 Scanning for hardcoded secrets..."
+          FOUND=0
+
+          # Check for API keys
+          if grep -rn "api_key\s*=\s*['\"]" vpn-extension/ --include="*.js" --include="*.json" 2>/dev/null; then
+            echo "❌ Found hardcoded API keys!"
+            FOUND=1
+          fi
+
+          # Check for passwords
+          if grep -rn "password\s*=\s*['\"]" vpn-extension/ --include="*.js" --include="*.json" 2>/dev/null; then
+            echo "❌ Found hardcoded passwords!"
+            FOUND=1
+          fi
+
+          # Check for tokens
+          if grep -rn "token\s*=\s*['\"]" vpn-extension/ --include="*.js" --include="*.json" 2>/dev/null | grep -v "bearer" | grep -v "Bearer" 2>/dev/null; then
+            echo "⚠️  Found potential tokens (review needed)"
+          fi
+
+          # Check for private keys
+          if grep -rn "BEGIN.*PRIVATE KEY" vpn-extension/ 2>/dev/null; then
+            echo "❌ Found private keys in extension!"
+            FOUND=1
+          fi
+
+          # Check for analytics/tracking (prohibited by AGENTS.md)
+          if grep -rn "google-analytics\|gtag\|analytics\|track\(" vpn-extension/ --include="*.js" 2>/dev/null | grep -v "console\.\|//\|stat" 2>/dev/null; then
+            echo "⚠️  Found potential tracking code (review needed)"
+          fi
+
+          if [ $FOUND -eq 1 ]; then
+            echo "❌ Security check FAILED"
+            exit 1
+          fi
+
+          echo "✅ No hardcoded secrets found"
+
+      - name: Check for sensitive files
+        run: |
+          echo "🔍 Checking for sensitive files..."
+          FOUND=0
+
+          # Check for .env files
+          if find vpn-extension/ -name ".env*" -o -name "*.pem" -o -name "*.key" 2>/dev/null | grep -q .; then
+            echo "❌ Found sensitive files (.env, .pem, .key) in extension!"
+            find vpn-extension/ -name ".env*" -o -name "*.pem" -o -name "*.key"
+            FOUND=1
+          fi
+
+          if [ $FOUND -eq 1 ]; then
+            echo "❌ Security check FAILED"
+            exit 1
+          fi
+
+          echo "✅ No sensitive files found"
+
+  # ──────────────────────────────────────────
+  # Job 5: File Size Check
+  # ──────────────────────────────────────────
+  file-size-check:
+    name: 📦 File Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check extension file sizes
+        run: |
+          echo "🔍 Checking file sizes..."
+          MAX_SIZE_KB=500
+          FOUND=0
+
+          for file in vpn-extension/*.js vpn-extension/*.css vpn-extension/*.html; do
+            if [ -f "$file" ]; then
+              SIZE_KB=$(du -k "$file" | cut -f1)
+              echo "  $file: ${SIZE_KB}KB"
+              if [ "$SIZE_KB" -gt "$MAX_SIZE_KB" ]; then
+                echo "❌ $file exceeds ${MAX_SIZE_KB}KB limit (${SIZE_KB}KB)"
+                FOUND=1
+              fi
+            fi
+          done
+
+          # Check total extension size
+          TOTAL_KB=$(du -sk vpn-extension/ | cut -f1)
+          echo ""
+          echo "📊 Total extension size: ${TOTAL_KB}KB"
+          if [ "$TOTAL_KB" -gt 5120 ]; then
+            echo "❌ Extension total size exceeds 5MB limit"
+            FOUND=1
+          fi
+
+          if [ $FOUND -eq 1 ]; then
+            echo "❌ File size check FAILED"
+            exit 1
+          fi
+
+          echo "✅ All files within size limits"
+
+  # ──────────────────────────────────────────
+  # Job 6: Manifest V3 Compatibility
+  # ──────────────────────────────────────────
+  manifest-v3-check:
+    name: ✅ Manifest V3 Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify Manifest V3 compliance
+        run: |
+          echo "🔍 Verifying Manifest V3 compliance..."
+
+          # Check manifest_version
+          MANIFEST_VERSION=$(jq -r '.manifest_version' vpn-extension/manifest.json)
+          if [ "$MANIFEST_VERSION" != "3" ]; then
+            echo "❌ manifest_version must be 3, got: $MANIFEST_VERSION"
+            exit 1
+          fi
+          echo "✅ manifest_version = 3"
+
+          # Check background uses service_worker (not scripts)
+          BG_TYPE=$(jq -r 'has("background") and (.background | has("service_worker"))' vpn-extension/manifest.json)
+          if [ "$BG_TYPE" != "true" ]; then
+            echo "❌ Background must use service_worker (Manifest V3)"
+            exit 1
+          fi
+          echo "✅ Uses background.service_worker"
+
+          # Check action instead of browser_action
+          HAS_ACTION=$(jq -r 'has("action")' vpn-extension/manifest.json)
+          HAS_BROWSER_ACTION=$(jq -r 'has("browser_action")' vpn-extension/manifest.json)
+          if [ "$HAS_BROWSER_ACTION" = "true" ]; then
+            echo "❌ Must use 'action' instead of 'browser_action' (Manifest V3)"
+            exit 1
+          fi
+          if [ "$HAS_ACTION" != "true" ]; then
+            echo "❌ Missing 'action' key"
+            exit 1
+          fi
+          echo "✅ Uses action (not browser_action)"
+
+          # Check required fields
+          for field in name version description; do
+            VALUE=$(jq -r ".$field // empty" vpn-extension/manifest.json)
+            if [ -z "$VALUE" ]; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+            echo "✅ $field present"
+          done
+
+          # Check icons exist
+          for icon in $(jq -r '.icons | keys[]' vpn-extension/manifest.json 2>/dev/null); do
+            ICON_PATH="vpn-extension/icons/icon${icon}.png"
+            if [ ! -f "$ICON_PATH" ]; then
+              echo "❌ Missing icon file: $ICON_PATH"
+              exit 1
+            fi
+            echo "✅ Icon ${icon}x${icon} exists"
+          done
+
+          # Check no prohibited permissions
+          PROHIBITED=$(jq -r '.permissions[]? | select(. == "debugger" or . == "nativeMessaging" or . == "webRequestBlocking")' vpn-extension/manifest.json 2>/dev/null)
+          if [ -n "$PROHIBITED" ]; then
+            echo "⚠️  Prohibited permissions found: $PROHIBITED"
+          fi
+
+          echo ""
+          echo "✅ Manifest V3 compliance verified!"

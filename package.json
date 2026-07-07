@@ -1,0 +1,36 @@
+{
+  "name": "movti-vpn-shield",
+  "version": "1.0.1",
+  "description": "MOVTI VPN Shield - Browser Extension",
+  "private": true,
+  "scripts": {
+    "test": "jest --verbose",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint vpn-extension/**/*.js --no-eslintrc -c .eslintrc.json",
+    "lint:fix": "eslint vpn-extension/**/*.js --no-eslintrc -c .eslintrc.json --fix",
+    "validate-manifest": "node tests/validate-manifest.js",
+    "debug": "echo 'Open tests/debug.html in browser to debug'"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "eslint": "^8.56.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "collectCoverageFrom": [
+      "vpn-extension/**/*.js",
+      "!vpn-extension/icons/**"
+    ]
+  }
+}
