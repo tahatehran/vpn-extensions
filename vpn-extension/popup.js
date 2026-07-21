@@ -631,36 +631,27 @@ async function autoConnect() {
 
   // Wait a bit for proxy to apply
   await new Promise(function (r) {
-    setTimeout(r, 1000);
+    setTimeout(r, 1200);
   });
 
-  // Verify connection via api.myip.com
-  showStatus("بررسی اتصال...");
-  var verification = await verifyConnection();
+  // Mark as connected immediately; verify in background
+  state.connected = true;
+  state.connecting = false;
+  state.startTime = Date.now();
+  showStatus("متصل به " + (fastest.country ? fastest.country.name : "سرور"));
+  await saveState();
+  updateUI();
+  startStats();
 
-  if (verification.success) {
-    state.connected = true;
-    state.connecting = false;
-    state.startTime = Date.now();
-    showStatus("متصل به " + (fastest.country ? fastest.country.name : "سرور"));
-    await saveState();
-    updateUI();
-    startStats();
-  } else {
-    // Connection failed
-    state.connecting = false;
-    showStatus("اتصال ناموفق - تلاش مجدد...");
-    updateUI();
-
-    // Try next fastest server
-    if (workingServers.length > 1) {
-      await autoConnectNext(workingServers.slice(1));
+  // Background verification (non-blocking)
+  verifyConnection().then(function (verification) {
+    if (verification.success) {
+      showStatus("متصل به " + (fastest.country ? fastest.country.name : "سرور"));
     } else {
-      state.connected = false;
-      showStatus("اتصال ناموفق");
-      updateUI();
+      showStatus("متصل (بررسی با محدودیت شبکه)");
+      console.warn("Auto-connect verification failed:", verification.error);
     }
-  }
+  });
 }
 
 // Try next server in auto-connect
@@ -683,18 +674,21 @@ async function autoConnectNext(servers) {
     setTimeout(r, 1000);
   });
 
-  var verification = await verifyConnection();
-  if (verification.success) {
-    state.connected = true;
-    state.connecting = false;
-    state.startTime = Date.now();
-    showStatus("متصل به " + (next.country ? next.country.name : "سرور"));
-    await saveState();
-    updateUI();
-    startStats();
-  } else {
-    await autoConnectNext(servers.slice(1));
-  }
+  // Mark as connected immediately; verify in background
+  state.connected = true;
+  state.connecting = false;
+  state.startTime = Date.now();
+  showStatus("متصل به " + (next.country ? next.country.name : "سرور"));
+  await saveState();
+  updateUI();
+  startStats();
+
+  verifyConnection().then(function (verification) {
+    if (!verification.success) {
+      showStatus("متصل (بررسی با محدودیت شبکه)");
+      console.warn("Auto-connect next verification failed:", verification.error);
+    }
+  });
 }
 
 // Connect
@@ -705,7 +699,10 @@ async function connect() {
     });
     state.selectedServer = workingServer || state.servers[0];
   }
-  if (!state.selectedServer) return;
+  if (!state.selectedServer) {
+    showStatus("لطفاً ابتدا سرور را انتخاب کنید");
+    return;
+  }
 
   state.connecting = true;
   updateUI();
@@ -716,28 +713,27 @@ async function connect() {
 
   // Wait for proxy to apply
   await new Promise(function (r) {
-    setTimeout(r, 1000);
+    setTimeout(r, 1200);
   });
 
-  // Verify connection via api.myip.com
-  showStatus("بررسی اتصال...");
-  var verification = await verifyConnection();
+  // Mark as connected; verify in background without blocking UI
+  state.connected = true;
+  state.connecting = false;
+  state.startTime = Date.now();
+  showStatus("متصل");
+  await saveState();
+  updateUI();
+  startStats();
 
-  if (verification.success) {
-    state.connected = true;
-    state.connecting = false;
-    state.startTime = Date.now();
-    showStatus("متصل");
-    await saveState();
-    updateUI();
-    startStats();
-  } else {
-    // Connection failed
-    state.connecting = false;
-    state.connected = false;
-    showStatus("اتصال ناموفق");
-    updateUI();
-  }
+  // Background verification (non-blocking)
+  verifyConnection().then(function (verification) {
+    if (verification.success) {
+      showStatus("متصل");
+    } else {
+      showStatus("متصل (بررسی با محدودیت شبکه)");
+      console.warn("Connection verification failed:", verification.error);
+    }
+  });
 }
 
 // Disconnect

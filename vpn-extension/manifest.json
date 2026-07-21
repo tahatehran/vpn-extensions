@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MOVTI VPN Shield",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "فیلترشکن قدرتمند با رابط کاربری مدرن | Powerful VPN with Modern UI",
   "permissions": [
     "proxy",
@@ -32,5 +32,6 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "privacy_policy_url": "https://tahatehran.github.io/privacy"
 }
