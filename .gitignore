@@ -297,7 +297,7 @@ lerna-debug.log*
 *.zip
 
 # Lock files (usually not needed in git)
-package-lock.json
+# package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
