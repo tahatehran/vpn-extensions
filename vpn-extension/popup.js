@@ -1,12 +1,15 @@
 /* ============================================
    MOVTI VPN Shield - Main JavaScript
-   Real ping test + CORS-friendly country detection
+   Map caches, async chunking, full error handling
    ============================================ */
 
 const PROXY_SOURCE =
   "https://cdn.jsdelivr.net/gh/tahatehran/worker-vpn-proxy/best_proxies.json";
-
 const IP_CHECK_URL = "https://api.myip.com";
+const MAX_GEO_CACHE = 500;
+const MAX_PING_CACHE = 200;
+const CHUNK_SIZE = 3;
+const PING_TEST_COUNT = 15;
 
 let state = {
   connected: false,
@@ -18,386 +21,305 @@ let state = {
 };
 
 const el = {};
+
+// ── Yield to main thread to prevent UI freeze ──
+function yieldToMain() {
+  return new Promise(function (r) { setTimeout(r, 0); });
+}
+
+// ── Debounce helper ──
+function debounce(fn, ms) {
+  var t = null;
+  return function () {
+    var ctx = this, args = arguments;
+    clearTimeout(t);
+    t = setTimeout(function () {
+      try { fn.apply(ctx, args); } catch (e) { console.error("Debounce err:", e); }
+    }, ms);
+  };
+}
+
+// ── Map cache helpers with size limit ──
+function cachePut(map, key, value, max) {
+  if (map.size >= max) {
+    var first = map.keys().next().value;
+    map.delete(first);
+  }
+  map.set(key, value);
+}
+
+// ── Caches ──
+var geoCache = new Map();
+var pingCache = new Map();
+
 function initElements() {
-  el.statusRing = document.getElementById("status-ring");
-  el.statusLabel = document.getElementById("status-label");
-  el.statusSub = document.getElementById("status-sub");
-  el.connectBtn = document.getElementById("connect-btn");
-  el.connectText = document.getElementById("connect-text");
-  el.btnAutoConnect = document.getElementById("btn-auto-connect");
-  el.serverList = document.getElementById("server-list");
-  el.searchInput = document.getElementById("search-input");
-  el.serverCount = document.getElementById("server-count");
-  el.btnRefresh = document.getElementById("btn-refresh");
-  el.btnSettings = document.getElementById("btn-settings");
-  el.statPing = document.getElementById("stat-ping");
-  el.statSpeed = document.getElementById("stat-speed");
-  el.statUpload = document.getElementById("stat-upload");
-  el.statDownload = document.getElementById("stat-download");
-  el.lastUpdate = document.getElementById("last-update");
+  try {
+    el.statusRing = document.getElementById("status-ring");
+    el.statusLabel = document.getElementById("status-label");
+    el.statusSub = document.getElementById("status-sub");
+    el.connectBtn = document.getElementById("connect-btn");
+    el.connectText = document.getElementById("connect-text");
+    el.btnAutoConnect = document.getElementById("btn-auto-connect");
+    el.serverList = document.getElementById("server-list");
+    el.searchInput = document.getElementById("search-input");
+    el.serverCount = document.getElementById("server-count");
+    el.btnRefresh = document.getElementById("btn-refresh");
+    el.btnSettings = document.getElementById("btn-settings");
+    el.statPing = document.getElementById("stat-ping");
+    el.statSpeed = document.getElementById("stat-speed");
+    el.statUpload = document.getElementById("stat-upload");
+    el.statDownload = document.getElementById("stat-download");
+    el.lastUpdate = document.getElementById("last-update");
+  } catch (e) {
+    console.error("initElements failed:", e);
+  }
 }
 
-// Country code to flag emoji
 function codeToFlag(cc) {
-  if (!cc || cc.length !== 2) return "🌐";
-  const pts = cc
-    .toUpperCase()
-    .split("")
-    .map((c) => 0x1f1e6 - 65 + c.charCodeAt(0));
-  return String.fromCodePoint(...pts);
+  if (!cc || cc.length !== 2) return "\uD83C\uDF10";
+  try {
+    var pts = cc.toUpperCase().split("").map(function (c) {
+      return 0x1f1e6 - 65 + c.charCodeAt(0);
+    });
+    return String.fromCodePoint.apply(null, pts);
+  } catch (e) { return "\uD83C\uDF10"; }
 }
 
-// Country name translations
-const COUNTRY_NAMES = {
-  US: "آمریکا",
-  DE: "آلمان",
-  GB: "انگلیس",
-  FR: "فرانسه",
-  JP: "ژاپن",
-  KR: "کره جنوبی",
-  CN: "چین",
-  RU: "روسیه",
-  NL: "هلند",
-  CA: "کانادا",
-  AU: "استرالیا",
-  BR: "برزیل",
-  IN: "هند",
-  IT: "ایتالیا",
-  ES: "اسپانیا",
-  SE: "سوئد",
-  NO: "نروژ",
-  FI: "فنلاند",
-  PL: "لهستان",
-  CH: "سوئیس",
-  AT: "اتریش",
-  BE: "بلژیک",
-  DK: "دانمارک",
-  IE: "ایرلند",
-  PT: "پرتغال",
-  CZ: "چک",
-  RO: "رومانی",
-  HU: "مجارستان",
-  TR: "ترکیه",
-  UA: "اوکراین",
-  IL: "اسرائیل",
-  SG: "سنگاپور",
-  HK: "هنگ کنگ",
-  TW: "تایوان",
-  TH: "تایلند",
-  VN: "ویتنام",
-  MY: "مالزی",
-  ID: "اندونزی",
-  PH: "فیلیپین",
-  MX: "مکزیک",
-  AR: "آرژانتین",
-  CO: "کلمبیا",
-  CL: "شیلی",
-  ZA: "آفریقای جنوبی",
-  NG: "نیجریه",
-  KE: "کنیا",
-  EG: "مصر",
-  SA: "عربستان",
-  AE: "امارات",
-  QA: "قطر",
-  KW: "کویت",
-  BH: "بحرین",
-  NZ: "نیوزیلند",
-  GR: "یونان",
-  BG: "بلغارستان",
-  RS: "صربستان",
-  HR: "کرواسی",
-  SK: "اسلواکی",
-  LT: "لیتوانی",
-  LV: "لتونی",
-  EE: "استونی",
-  IS: "ایسلند",
-  LU: "لوکزامبورگ",
-  CY: "قبرس",
-  MT: "مالت",
+var COUNTRY_NAMES = {
+  US:"\u0622\u0645\u0631\u06CC\u06A9\u0627",DE:"\u0622\u0644\u0645\u0627\u0646",GB:"\u0627\u0646\u06AF\u0644\u06CC\u0633",FR:"\u0641\u0631\u0627\u0646\u0633\u0647",
+  JP:"\u0698\u0627\u067E\u0646",KR:"\u06A9\u0631\u0647 \u062C\u0646\u0648\u0628\u06CC",CN:"\u0686\u06CC\u0646",RU:"\u0631\u0648\u0633\u06CC\u0647",
+  NL:"\u0647\u0644\u0646\u062F",CA:"\u06A9\u0627\u0646\u0627\u062F\u0627",AU:"\u0627\u0633\u062A\u0631\u0627\u0644\u06CC\u0627",BR:"\u0628\u0631\u0632\u06CC\u0644",
+  IN:"\u0647\u0646\u062F",IT:"\u0627\u06CC\u062A\u0627\u0644\u06CC\u0627",ES:"\u0627\u0633\u067E\u0627\u0646\u06CC\u0627",SE:"\u0633\u0648\u0626\u062F",
+  NO:"\u0646\u0631\u0648\u0698",FI:"\u0641\u0646\u0644\u0646\u062F",PL:"\u0644\u0647\u0633\u062A\u0627\u0646",CH:"\u0633\u0648\u0626\u06CC\u0633",
+  TR:"\u062A\u0631\u06A9\u06CC\u0647",SG:"\u0633\u0646\u06AF\u0627\u067E\u0648\u0631",HK:"\u0647\u0646\u06AF \u06A9\u0646\u06AF",AE:"\u0627\u0645\u0627\u0631\u0627\u062A",
+  SA:"\u0639\u0631\u0628\u0633\u062A\u0627\u0646",IL:"\u0627\u0633\u0631\u0627\u0626\u06CC\u0644",UA:"\u0627\u0648\u06A9\u0631\u0627\u06CC\u0646",
+  GR:"\u06CC\u0648\u0646\u0627\u0646",RO:"\u0631\u0648\u0645\u0627\u0646\u06CC",BG:"\u0628\u0644\u063A\u0627\u0631\u0633\u062A\u0627\u0646",
+  RS:"\u0635\u0631\u0628\u0633\u062A\u0627\u0646",HR:"\u06A9\u0631\u0648\u0627\u0633\u06CC",SK:"\u0627\u0633\u0644\u0648\u0627\u06A9\u06CC",
+  IS:"\u0627\u06CC\u0633\u0644\u0646\u062F",MX:"\u0645\u06A9\u0632\u06CC\u06A9",AR:"\u0622\u0631\u0698\u0627\u0646\u062A\u06CC",
+  CO:"\u06A9\u0644\u0645\u0628\u06CC\u0627",CL:"\u0634\u06CC\u0644\u06CC",ZA:"\u0622\u0641\u0631\u06CC\u0642\u0627\u06CC \u062C\u0646\u0648\u0628\u06CC",
+  NG:"\u0646\u06CC\u062C\u0631\u06CC\u0647",EG:"\u0645\u0635\u0631",KE:"\u06A9\u0646\u06CC\u0627",
+  NZ:"\u0646\u06CC\u0648\u0632\u06CC\u0644\u0646\u062F",TW:"\u062A\u0627\u06CC\u0648\u0627\u0646",TH:"\u062A\u0627\u06CC\u0644\u0646\u062F",
+  VN:"\u0648\u06CC\u062A\u0646\u0627\u0645",MY:"\u0645\u0627\u0644\u0632\u06CC",ID:"\u0627\u0646\u062F\u0648\u0646\u0632\u06CC",
+  PH:"\u0641\u06CC\u0644\u06CC\u067E\u06CC\u0646",IN:"\u0647\u0646\u062D",PK:"\u067E\u0627\u06A9\u0633\u062A\u0627\u0646",
 };
 
-// Get country from IP using ipinfo.io (CORS-friendly)
-const geoCache = {};
-
+// ── Country detection (Map-cached) ──
 async function detectCountry(ip) {
-  if (geoCache[ip]) return geoCache[ip];
+  if (geoCache.has(ip)) return geoCache.get(ip);
+  var fallback = { flag: "\uD83C\uDF10", name: "\u0633\u0631\u0648\u0631 " + ip.split(".")[0] };
 
-  // Try ip-api.com batch-style (individual, with timeout)
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
-    const resp = await fetch(
-      "http://ip-api.com/json/" + ip + "?fields=status,country,countryCode",
-      { signal: controller.signal },
-    );
-    clearTimeout(timer);
-    const data = await resp.json();
-    if (data.status === "success" && data.country) {
-      const name = COUNTRY_NAMES[data.countryCode] || data.country;
-      const result = { flag: codeToFlag(data.countryCode), name: name };
-      geoCache[ip] = result;
-      return result;
+    var c1 = new AbortController();
+    var t1 = setTimeout(function () { try { c1.abort(); } catch(_){} }, 3000);
+    var r1 = await fetch("http://ip-api.com/json/" + ip + "?fields=status,country,countryCode", { signal: c1.signal });
+    clearTimeout(t1);
+    var d1 = await r1.json();
+    if (d1.status === "success" && d1.country) {
+      var res = { flag: codeToFlag(d1.countryCode), name: COUNTRY_NAMES[d1.countryCode] || d1.country };
+      cachePut(geoCache, ip, res, MAX_GEO_CACHE);
+      return res;
     }
-  } catch (e) {
-    // Ignore
-  }
+  } catch (e) { /* try fallback */ }
 
-  // Fallback: try ipinfo.io
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2000);
-    const resp = await fetch("https://ipinfo.io/" + ip + "/json", {
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    const data = await resp.json();
-    if (data.country) {
-      const name = COUNTRY_NAMES[data.country] || data.country;
-      const result = { flag: codeToFlag(data.country), name: name };
-      geoCache[ip] = result;
-      return result;
+    var c2 = new AbortController();
+    var t2 = setTimeout(function () { try { c2.abort(); } catch(_){} }, 2000);
+    var r2 = await fetch("https://ipinfo.io/" + ip + "/json", { signal: c2.signal });
+    clearTimeout(t2);
+    var d2 = await r2.json();
+    if (d2.country) {
+      var res2 = { flag: codeToFlag(d2.country), name: COUNTRY_NAMES[d2.country] || d2.country };
+      cachePut(geoCache, ip, res2, MAX_GEO_CACHE);
+      return res2;
     }
-  } catch (e) {
-    // Ignore
-  }
+  } catch (e) { /* ignore */ }
 
-  return { flag: "🌐", name: "سرور " + ip.split(".")[0] };
+  cachePut(geoCache, ip, fallback, MAX_GEO_CACHE);
+  return fallback;
 }
 
-// Real ping test using fetch (more reliable than Image loading)
+// ── Ping test with Map cache + abort ──
 function testPing(ip, port, timeout) {
   timeout = timeout || 3000;
+  var ck = ip + ":" + port;
+  var cached = pingCache.get(ck);
+  if (cached && Date.now() - cached.t < 60000) return Promise.resolve(cached.p);
+
   return new Promise(function (resolve) {
     var start = performance.now();
-    var resolved = false;
+    var done = false;
+    var ctrl = new AbortController();
+    var fb = setTimeout(function () { finish(-1); }, timeout + 200);
 
-    function done(val) {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(fallbackTimer);
-        resolve(val);
-      }
+    function finish(val) {
+      if (done) return;
+      done = true;
+      clearTimeout(fb);
+      try { ctrl.abort(); } catch(_){}
+      cachePut(pingCache, ck, { p: val, t: Date.now() }, MAX_PING_CACHE);
+      resolve(val);
     }
-
-    var fallbackTimer = setTimeout(function () {
-      done(-1);
-    }, timeout + 200);
 
     try {
-      // Use fetch with no-cors to test connectivity through proxy
       fetch("http://" + ip + ":" + port + "/", {
-        method: "HEAD",
-        mode: "no-cors",
-        cache: "no-store",
-      })
-        .then(function () {
-          done(Math.round(performance.now() - start));
-        })
-        .catch(function () {
-          // Even on error, if it took time, the server is reachable
-          var elapsed = Math.round(performance.now() - start);
-          if (elapsed > 10 && elapsed < timeout) {
-            done(elapsed);
-          } else {
-            done(-1);
-          }
-        });
-    } catch (e) {
-      done(-1);
-    }
+        method: "HEAD", mode: "no-cors", cache: "no-store", signal: ctrl.signal
+      }).then(function () {
+        finish(Math.round(performance.now() - start));
+      }).catch(function () {
+        var el = Math.round(performance.now() - start);
+        finish(el > 10 && el < timeout ? el : -1);
+      });
+    } catch (e) { finish(-1); }
   });
 }
 
-// Verify connection by checking IP via api.myip.com
+// ── Verify connection ──
 async function verifyConnection() {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    const resp = await fetch(IP_CHECK_URL, {
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    clearTimeout(timer);
-    const data = await resp.json();
-    if (data && data.ip) {
-      return { success: true, ip: data.ip, country: data.country || "" };
-    }
+    var c = new AbortController();
+    var t = setTimeout(function () { try { c.abort(); } catch(_){} }, 5000);
+    var r = await fetch(IP_CHECK_URL, { signal: c.signal, cache: "no-store" });
+    clearTimeout(t);
+    var d = await r.json();
+    if (d && d.ip) return { success: true, ip: d.ip, country: d.country || "" };
     return { success: false };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
+  } catch (e) { return { success: false, error: e.message || String(e) }; }
 }
 
-// Initialize
+// ── Initialize ──
 document.addEventListener("DOMContentLoaded", async function () {
-  initElements();
-  await loadSavedState();
-  await fetchServers();
-  setupEvents();
+  try {
+    initElements();
+    await loadSavedState();
+    fetchServers(false).catch(function (e) { console.error("fetchServers init err:", e); });
+    setupEvents();
+  } catch (e) { console.error("DOMContentLoaded error:", e); }
 });
 
-// Load saved state
+// ── Load / Save state ──
 async function loadSavedState() {
   return new Promise(function (resolve) {
-    var done = function (data) {
-      if (data.connected) state.connected = data.connected;
-      if (data.selectedServer) state.selectedServer = data.selectedServer;
-      if (data.serverList && data.serverList.length > 0)
-        state.servers = data.serverList;
-      if (data.lastUpdate) state.lastUpdate = data.lastUpdate;
-      updateUI();
-      resolve();
-    };
-    if (chrome && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(
-        ["connected", "selectedServer", "serverList", "lastUpdate"],
-        done,
-      );
-    } else {
-      var saved = localStorage.getItem("vpnState");
-      if (saved) {
-        var p = JSON.parse(saved);
-        state = Object.assign({}, state, p);
+    try {
+      var cb = function (data) {
+        try {
+          if (data.connected) state.connected = data.connected;
+          if (data.selectedServer) state.selectedServer = data.selectedServer;
+          if (data.serverList && data.serverList.length > 0) state.servers = data.serverList;
+          if (data.lastUpdate) state.lastUpdate = data.lastUpdate;
+          updateUI();
+        } catch (e) { console.error("loadSavedState cb error:", e); }
+        resolve();
+      };
+      if (chrome && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(["connected", "selectedServer", "serverList", "lastUpdate"], cb);
+      } else {
+        var saved = localStorage.getItem("vpnState");
+        if (saved) { var p = JSON.parse(saved); state = Object.assign({}, state, p); }
+        updateUI();
+        resolve();
       }
-      updateUI();
-      resolve();
-    }
+    } catch (e) { console.error("loadSavedState error:", e); resolve(); }
   });
 }
 
-// Save state
 async function saveState() {
-  var data = {
-    connected: state.connected,
-    selectedServer: state.selectedServer,
-    serverList: state.servers,
-    lastUpdate: state.lastUpdate,
-  };
-  if (chrome && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.set(data);
-  } else {
-    localStorage.setItem("vpnState", JSON.stringify(data));
-  }
+  try {
+    var data = {
+      connected: state.connected,
+      selectedServer: state.selectedServer,
+      serverList: state.servers,
+      lastUpdate: state.lastUpdate,
+    };
+    if (chrome && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set(data);
+    } else {
+      localStorage.setItem("vpnState", JSON.stringify(data));
+    }
+  } catch (e) { console.error("saveState error:", e); }
 }
 
-// Check if refresh needed (24h)
 function needsRefresh() {
   if (!state.lastUpdate) return true;
-  var last = new Date(state.lastUpdate).getTime();
-  return (Date.now() - last) / (1000 * 60 * 60) >= 24;
+  try {
+    return (Date.now() - new Date(state.lastUpdate).getTime()) / 3600000 >= 24;
+  } catch (e) { return true; }
 }
 
-// Fetch servers from JSON + real ping test
+// ── Fetch servers (async chunked) ──
 async function fetchServers(force) {
-  // If connected, skip fetching to avoid going through VPN
   if (state.connected) {
-    console.log(
-      "VPN is connected, skipping server fetch to avoid VPN interference",
-    );
-    if (state.servers.length > 0) {
-      renderServerList();
-      updateServerCount();
-    }
+    if (state.servers.length > 0) { renderServerList(); updateServerCount(); }
     return;
   }
-
   if (!force && state.servers.length > 0 && !needsRefresh()) {
-    renderServerList();
-    updateServerCount();
-    return;
+    renderServerList(); updateServerCount(); return;
   }
 
   showLoading(true);
   try {
     var resp = await fetch(PROXY_SOURCE);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
     var json = await resp.json();
     var proxies = json.proxies || [];
 
-    // Deduplicate by IP:PORT, keep best ping
-    var map = new Map();
+    // Deduplicate with Map
+    var proxyMap = new Map();
     for (var i = 0; i < proxies.length; i++) {
       var p = proxies[i];
-      var key = p.ip + ":" + p.port;
-      if (!map.has(key) || p.time_ms < map.get(key).time_ms) {
-        map.set(key, p);
-      }
+      var k = p.ip + ":" + p.port;
+      if (!proxyMap.has(k) || p.time_ms < proxyMap.get(k).time_ms) proxyMap.set(k, p);
     }
+    await yieldToMain();
 
     var idx = 0;
     state.servers = [];
-    var entries = Array.from(map.entries());
-    for (var j = 0; j < entries.length; j++) {
-      var proxy = entries[j][1];
+    proxyMap.forEach(function (proxy) {
       state.servers.push({
-        id: idx++,
-        ip: proxy.ip,
-        port: proxy.port,
-        jsonPing: Math.round(proxy.time_ms),
-        ping: Math.round(proxy.time_ms),
-        country: null,
-        name: "سرور",
-        status: proxy.status,
-        working: false,
+        id: idx++, ip: proxy.ip, port: proxy.port,
+        jsonPing: Math.round(proxy.time_ms), ping: Math.round(proxy.time_ms),
+        country: null, name: "\u0633\u0631\u0648\u0631", status: proxy.status, working: false,
       });
+    });
+
+    // Detect countries in chunks
+    var seen = new Map();
+    for (var k2 = 0; k2 < state.servers.length; k2++) {
+      if (!seen.has(state.servers[k2].ip)) seen.set(state.servers[k2].ip, true);
     }
+    var uniqueIPs = Array.from(seen.keys());
+    showStatus("\u062A\u0634\u062E\u06CC\u0635 \u06A9\u0634\u0648\u0631 " + uniqueIPs.length + " \u0633\u0631\u0648\u0631...");
 
-    // Detect countries for unique IPs (with cache)
-    var uniqueIPs = [];
-    var seen = {};
-    for (var k = 0; k < state.servers.length; k++) {
-      if (!seen[state.servers[k].ip]) {
-        seen[state.servers[k].ip] = true;
-        uniqueIPs.push(state.servers[k].ip);
-      }
-    }
-
-    showStatus("تشخیص کشور " + uniqueIPs.length + " سرور...");
-
-    // Process in batches of 3
-    for (var b = 0; b < uniqueIPs.length; b += 3) {
-      var batch = uniqueIPs.slice(b, b + 3);
-      var results = await Promise.all(
-        batch.map(function (ip) {
-          return detectCountry(ip);
-        }),
-      );
-      for (var r = 0; r < batch.length; r++) {
-        var ipAddr = batch[r];
-        var country = results[r];
+    for (var b = 0; b < uniqueIPs.length; b += CHUNK_SIZE) {
+      var chunk = uniqueIPs.slice(b, b + CHUNK_SIZE);
+      var results = await Promise.all(chunk.map(function (ip) { return detectCountry(ip); }));
+      for (var r = 0; r < chunk.length; r++) {
         for (var s = 0; s < state.servers.length; s++) {
-          if (state.servers[s].ip === ipAddr) {
-            state.servers[s].country = country;
-            state.servers[s].name = country.name + " - " + ipAddr;
+          if (state.servers[s].ip === chunk[r]) {
+            state.servers[s].country = results[r];
+            state.servers[s].name = results[r].name + " - " + chunk[r];
           }
         }
       }
+      await yieldToMain();
     }
 
-    // Real ping test (test top 15 servers)
-    showStatus("تست پینگ واقعی...");
-    var toTest = state.servers.slice(0, 15);
-
+    // Ping test top servers in chunks
+    showStatus("\u062A\u0633\u062A \u067E\u06CC\u0646\u06AF \u0648\u0627\u0642\u0639\u06CC...");
+    var toTest = state.servers.slice(0, PING_TEST_COUNT);
     for (var t = 0; t < toTest.length; t++) {
       var srv = toTest[t];
-      showStatus("تست " + (t + 1) + "/" + toTest.length + ": " + srv.ip);
-
+      showStatus("\u062A\u0633\u062A " + (t + 1) + "/" + toTest.length + ": " + srv.ip);
       var realPing = await testPing(srv.ip, srv.port, 2500);
-      if (realPing > 0) {
-        srv.ping = realPing;
-        srv.working = true;
-      } else {
-        srv.ping = srv.jsonPing;
-        srv.working = false;
-      }
+      if (realPing > 0) { srv.ping = realPing; srv.working = true; }
+      else { srv.ping = srv.jsonPing; srv.working = false; }
+      await yieldToMain();
     }
 
-    // Remaining servers: assume working based on JSON data
-    for (var m = 15; m < state.servers.length; m++) {
+    for (var m = PING_TEST_COUNT; m < state.servers.length; m++) {
       state.servers[m].ping = state.servers[m].jsonPing;
       state.servers[m].working = true;
     }
 
-    // Sort: working first, then by ping
     state.servers.sort(function (a, b) {
       if (a.working && !b.working) return -1;
       if (!a.working && b.working) return 1;
@@ -406,490 +328,272 @@ async function fetchServers(force) {
 
     state.lastUpdate = json.timestamp || new Date().toISOString();
     showStatus("");
-
     await saveState();
     renderServerList();
     updateServerCount();
   } catch (err) {
-    console.error("Failed to fetch servers:", err);
-    if (state.servers.length > 0) {
-      renderServerList();
-      updateServerCount();
-    } else {
-      showEmptyState("خطا در بارگذاری سرورها");
-    }
+    console.error("fetchServers error:", err);
+    if (state.servers.length > 0) { renderServerList(); updateServerCount(); }
+    else showEmptyState("\u062E\u0637\u0627 \u062F\u0631 \u0628\u0627\u0631\u06AF\u0630\u0627\u0631\u06CC \u0633\u0631\u0648\u0631\u0647\u0627");
   }
   showLoading(false);
 }
 
-// Show status message
 function showStatus(msg) {
-  if (el.statusSub && msg) {
-    el.statusSub.textContent = msg;
-  }
+  try { if (el.statusSub && msg) el.statusSub.textContent = msg; } catch (e) {}
 }
 
-// Render server list
 function renderServerList(filter) {
-  var list = el.serverList;
-  var servers = state.servers;
-  var filtered = filter
-    ? servers.filter(function (s) {
-        var c = s.country || { name: "" };
-        return (
-          s.name.includes(filter) ||
-          s.ip.includes(filter) ||
-          c.name.includes(filter)
-        );
-      })
-    : servers;
+  try {
+    var list = el.serverList;
+    var servers = state.servers;
+    var filtered = filter
+      ? servers.filter(function (s) {
+          var c = s.country || { name: "" };
+          return s.name.includes(filter) || s.ip.includes(filter) || c.name.includes(filter);
+        })
+      : servers;
 
-  if (filtered.length === 0) {
-    showEmptyState("سروری یافت نشد");
-    return;
-  }
+    if (filtered.length === 0) { showEmptyState("\u0633\u0631\u0648\u0631\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F"); return; }
 
-  var html = "";
-  var limit = Math.min(filtered.length, 50);
-  for (var i = 0; i < limit; i++) {
-    var server = filtered[i];
-    var c = server.country || { flag: "🌐", name: "سرور" };
-    var selected =
-      state.selectedServer && state.selectedServer.id === server.id;
-    var pingVal = server.ping;
-    var pingClass = !server.working
-      ? "ping-bad"
-      : pingVal < 200
-        ? "ping-good"
-        : pingVal < 500
-          ? "ping-medium"
-          : "ping-bad";
-    var statusIcon = server.working ? "✓" : "✗";
-    var extraClass = server.working ? "" : " server-down";
+    // Build HTML in chunks to avoid long string
+    var parts = [];
+    var limit = Math.min(filtered.length, 50);
+    for (var i = 0; i < limit; i++) {
+      var server = filtered[i];
+      var c = server.country || { flag: "\uD83C\uDF10", name: "\u0633\u0631\u0648\u0631" };
+      var sel = state.selectedServer && state.selectedServer.id === server.id;
+      var pv = server.ping;
+      var pc = !server.working ? "ping-bad" : pv < 200 ? "ping-good" : pv < 500 ? "ping-medium" : "ping-bad";
+      var si = server.working ? "\u2713" : "\u2717";
+      var ec = server.working ? "" : " server-down";
+      parts.push(
+        '<div class="server-item ' + (sel ? "selected " : "") + ec + '" data-id="' + server.id + '">' +
+        '<div class="server-flag">' + c.flag + '</div>' +
+        '<div class="server-info"><div class="server-name">' + c.name + " " + si + '</div>' +
+        '<div class="server-ip">' + server.ip + ":" + server.port + '</div></div>' +
+        '<div class="server-ping"><span class="ping-dot ' + pc + '"></span><span>' +
+        (server.working ? pv + "ms" : "\u0646\u0627\u0645\u0648\u0641\u0642") + '</span></div></div>'
+      );
+    }
+    list.innerHTML = parts.join("");
 
-    html +=
-      '<div class="server-item ' +
-      (selected ? "selected " : "") +
-      extraClass +
-      '" data-id="' +
-      server.id +
-      '">' +
-      '<div class="server-flag">' +
-      c.flag +
-      "</div>" +
-      '<div class="server-info">' +
-      '<div class="server-name">' +
-      c.name +
-      " " +
-      statusIcon +
-      "</div>" +
-      '<div class="server-ip">' +
-      server.ip +
-      ":" +
-      server.port +
-      "</div>" +
-      "</div>" +
-      '<div class="server-ping">' +
-      '<span class="ping-dot ' +
-      pingClass +
-      '"></span>' +
-      "<span>" +
-      (server.working ? pingVal + "ms" : "ناموفق") +
-      "</span>" +
-      "</div>" +
-      "</div>";
-  }
-
-  list.innerHTML = html;
-
-  var items = list.querySelectorAll(".server-item");
-  for (var j = 0; j < items.length; j++) {
-    items[j].addEventListener("click", function () {
-      var id = parseInt(this.dataset.id);
-      selectServer(id);
-    });
-  }
+    var items = list.querySelectorAll(".server-item");
+    for (var j = 0; j < items.length; j++) {
+      items[j].addEventListener("click", function () {
+        try { selectServer(parseInt(this.dataset.id)); } catch (e) {}
+      });
+    }
+  } catch (e) { console.error("renderServerList error:", e); }
 }
 
-// Select server
 function selectServer(id) {
-  state.selectedServer = state.servers.find(function (s) {
-    return s.id === id;
-  });
-  saveState();
-  renderServerList(el.searchInput.value);
-  updateUI();
+  try {
+    state.selectedServer = state.servers.find(function (s) { return s.id === id; });
+    saveState();
+    renderServerList(el.searchInput.value);
+    updateUI();
+  } catch (e) { console.error("selectServer error:", e); }
 }
 
-// Show loading
 function showLoading(show) {
-  if (show) {
-    el.serverList.innerHTML =
-      '<div class="server-loading"><div class="spinner-sm"></div><span>در حال بارگذاری و تست سرورها...</span></div>';
-  }
+  try {
+    if (show) {
+      el.serverList.innerHTML =
+        '<div class="server-loading"><div class="spinner-sm"></div><span>\u062F\u0631 \u062D\u0627\u0644 \u0628\u0627\u0631\u06AF\u0630\u0627\u0631\u06CC \u0648 \u062A\u0633\u062A \u0633\u0631\u0648\u0631\u0647\u0627...</span></div>';
+    }
+  } catch (e) {}
 }
 
-// Show empty state
 function showEmptyState(msg) {
-  el.serverList.innerHTML =
-    '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 15h8M9 9h.01M15 9h.01"/></svg><span>' +
-    msg +
-    "</span></div>";
+  try {
+    el.serverList.innerHTML =
+      '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 15h8M9 9h.01M15 9h.01"/></svg><span>' + msg + '</span></div>';
+  } catch (e) {}
 }
 
-// Update server count + last update time
 function updateServerCount() {
-  var working = state.servers.filter(function (s) {
-    return s.working;
-  }).length;
-  var total = state.servers.length;
-  var uniqueIPs = {};
-  state.servers.forEach(function (s) {
-    uniqueIPs[s.ip] = true;
-  });
-  var ipCount = Object.keys(uniqueIPs).length;
-  el.serverCount.textContent =
-    working + "/" + total + " سرور (" + ipCount + " IP)";
-
-  if (el.lastUpdate && state.lastUpdate) {
-    var d = new Date(state.lastUpdate);
-    var fa = d.toLocaleDateString("fa-IR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    el.lastUpdate.textContent = "بروزرسانی: " + fa;
-  }
+  try {
+    var working = state.servers.filter(function (s) { return s.working; }).length;
+    var total = state.servers.length;
+    var ips = new Map();
+    state.servers.forEach(function (s) { ips.set(s.ip, true); });
+    el.serverCount.textContent = working + "/" + total + " \u0633\u0631\u0648\u0631 (" + ips.size + " IP)";
+    if (el.lastUpdate && state.lastUpdate) {
+      var d = new Date(state.lastUpdate);
+      el.lastUpdate.textContent = "\u0628\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06CC: " + d.toLocaleDateString("fa-IR", {
+        year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+    }
+  } catch (e) { console.error("updateServerCount error:", e); }
 }
 
-// Toggle connection
 async function toggleConnection() {
   if (state.connecting) return;
-  if (state.connected) {
-    disconnect();
-  } else {
-    connect();
-  }
+  try { state.connected ? disconnect() : connect(); } catch (e) { console.error("toggleConnection error:", e); }
 }
 
-// Auto-connect: find fastest working server
 async function autoConnect() {
-  showStatus("جستجوی سریع‌ترین سرور...");
-  state.connecting = true;
-  updateUI();
+  try {
+    showStatus("\u062C\u0633\u062A\u062C\u0648\u06CC \u0633\u0631\u06CC\u0639\u062A\u0631\u06CC\u0646 \u0633\u0631\u0648\u0631...");
+    state.connecting = true;
+    updateUI();
 
-  // If no servers loaded, fetch them first
-  if (state.servers.length === 0) {
-    await fetchServers(true);
-  }
+    if (state.servers.length === 0) await fetchServers(true);
 
-  // Get working servers sorted by ping
-  var workingServers = state.servers.filter(function (s) {
-    return s.working;
-  });
+    var workingServers = state.servers.filter(function (s) { return s.working; });
 
-  if (workingServers.length === 0) {
-    // No working servers found, test top servers
-    showStatus("تست سرورها برای یافتن بهترین گزینه...");
-    var toTest = state.servers.slice(0, 10);
-    for (var t = 0; t < toTest.length; t++) {
-      var srv = toTest[t];
-      showStatus("تست " + (t + 1) + "/" + toTest.length + ": " + srv.ip);
-      var realPing = await testPing(srv.ip, srv.port, 2000);
-      if (realPing > 0) {
-        srv.ping = realPing;
-        srv.working = true;
-        workingServers.push(srv);
+    if (workingServers.length === 0) {
+      showStatus("\u062A\u0633\u062A \u0633\u0631\u0648\u0631\u0647\u0627...");
+      var toTest = state.servers.slice(0, 10);
+      for (var t = 0; t < toTest.length; t++) {
+        showStatus("\u062A\u0633\u062A " + (t + 1) + "/" + toTest.length + ": " + toTest[t].ip);
+        var rp = await testPing(toTest[t].ip, toTest[t].port, 2000);
+        if (rp > 0) { toTest[t].ping = rp; toTest[t].working = true; workingServers.push(toTest[t]); }
+        await yieldToMain();
       }
+      state.servers.sort(function (a, b) { return (a.working === b.working) ? a.ping - b.ping : b.working - a.working; });
+      await saveState(); renderServerList();
     }
-    // Re-sort
-    state.servers.sort(function (a, b) {
-      if (a.working && !b.working) return -1;
-      if (!a.working && b.working) return 1;
-      return a.ping - b.ping;
-    });
-    await saveState();
-    renderServerList();
-  }
 
-  if (workingServers.length === 0) {
-    showStatus("هیچ سرور فعالی یافت نشد");
-    state.connecting = false;
-    updateUI();
-    return;
-  }
-
-  // Select fastest working server
-  var fastest = workingServers[0];
-  state.selectedServer = fastest;
-  showStatus("اتصال به " + fastest.ip + "...");
-
-  // Apply proxy
-  applyProxy(fastest);
-
-  // Wait a bit for proxy to apply
-  await new Promise(function (r) {
-    setTimeout(r, 1200);
-  });
-
-  // Mark as connected immediately; verify in background
-  state.connected = true;
-  state.connecting = false;
-  state.startTime = Date.now();
-  showStatus("متصل به " + (fastest.country ? fastest.country.name : "سرور"));
-  await saveState();
-  updateUI();
-  startStats();
-
-  // Background verification (non-blocking)
-  verifyConnection().then(function (verification) {
-    if (verification.success) {
-      showStatus("متصل به " + (fastest.country ? fastest.country.name : "سرور"));
-    } else {
-      showStatus("متصل (بررسی با محدودیت شبکه)");
-      console.warn("Auto-connect verification failed:", verification.error);
+    if (workingServers.length === 0) {
+      showStatus("\u0647\u06CC\u0686 \u0633\u0631\u0648\u0631 \u0641\u0639\u0627\u0644\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F");
+      state.connecting = false; updateUI(); return;
     }
-  });
+
+    var fastest = workingServers[0];
+    state.selectedServer = fastest;
+    showStatus("\u0627\u062A\u0635\u0627\u0644 \u0628\u0647 " + fastest.ip + "...");
+    applyProxy(fastest);
+    await new Promise(function (r) { setTimeout(r, 1200); });
+
+    state.connected = true; state.connecting = false; state.startTime = Date.now();
+    showStatus("\u0645\u062A\u0635\u0644 " + (fastest.country ? fastest.country.name : "\u0633\u0631\u0648\u0631"));
+    await saveState(); updateUI(); startStats();
+
+    verifyConnection().then(function (v) {
+      if (!v.success) showStatus("\u0645\u062A\u0635\u0644 (\u0628\u0631\u0636\u0639\u06CC \u0628\u0627 \u0645\u062D\u062F\u0648\u062F\u06CC\u062A \u0634\u0628\u06A9\u0647)");
+    }).catch(function () {});
+  } catch (e) { console.error("autoConnect error:", e); state.connecting = false; updateUI(); }
 }
 
-// Try next server in auto-connect
-async function autoConnectNext(servers) {
-  if (servers.length === 0) {
-    state.connected = false;
-    state.connecting = false;
-    showStatus("اتصال ناموفق");
-    updateUI();
-    return;
-  }
-
-  var next = servers[0];
-  state.selectedServer = next;
-  showStatus("تلاش با " + next.ip + "...");
-  updateUI();
-
-  applyProxy(next);
-  await new Promise(function (r) {
-    setTimeout(r, 1000);
-  });
-
-  // Mark as connected immediately; verify in background
-  state.connected = true;
-  state.connecting = false;
-  state.startTime = Date.now();
-  showStatus("متصل به " + (next.country ? next.country.name : "سرور"));
-  await saveState();
-  updateUI();
-  startStats();
-
-  verifyConnection().then(function (verification) {
-    if (!verification.success) {
-      showStatus("متصل (بررسی با محدودیت شبکه)");
-      console.warn("Auto-connect next verification failed:", verification.error);
-    }
-  });
-}
-
-// Connect
 async function connect() {
-  if (!state.selectedServer && state.servers.length > 0) {
-    var workingServer = state.servers.find(function (s) {
-      return s.working;
-    });
-    state.selectedServer = workingServer || state.servers[0];
-  }
-  if (!state.selectedServer) {
-    showStatus("لطفاً ابتدا سرور را انتخاب کنید");
-    return;
-  }
-
-  state.connecting = true;
-  updateUI();
-  showStatus("در حال اتصال...");
-
-  // Apply proxy
-  applyProxy(state.selectedServer);
-
-  // Wait for proxy to apply
-  await new Promise(function (r) {
-    setTimeout(r, 1200);
-  });
-
-  // Mark as connected; verify in background without blocking UI
-  state.connected = true;
-  state.connecting = false;
-  state.startTime = Date.now();
-  showStatus("متصل");
-  await saveState();
-  updateUI();
-  startStats();
-
-  // Background verification (non-blocking)
-  verifyConnection().then(function (verification) {
-    if (verification.success) {
-      showStatus("متصل");
-    } else {
-      showStatus("متصل (بررسی با محدودیت شبکه)");
-      console.warn("Connection verification failed:", verification.error);
+  try {
+    if (!state.selectedServer && state.servers.length > 0) {
+      state.selectedServer = state.servers.find(function (s) { return s.working; }) || state.servers[0];
     }
-  });
+    if (!state.selectedServer) { showStatus("\u0644\u0637\u0641\u0627\u064B \u0627\u0628\u062A\u062F\u0627 \u0633\u0631\u0648\u0631 \u0631\u0627 \u0627\u0646\u062A\u062E\u0627\u0628 \u06A9\u0646\u06CC\u062F"); return; }
+    state.connecting = true; updateUI();
+    showStatus("\u062F\u0631 \u062D\u0627\u0644 \u0627\u062A\u0635\u0627\u0644...");
+    applyProxy(state.selectedServer);
+    await new Promise(function (r) { setTimeout(r, 1200); });
+    state.connected = true; state.connecting = false; state.startTime = Date.now();
+    showStatus("\u0645\u062A\u0635\u0644");
+    await saveState(); updateUI(); startStats();
+    verifyConnection().then(function (v) {
+      if (!v.success) showStatus("\u0645\u062A\u0635\u0644 (\u0628\u0631\u0636\u0639\u06CC \u0628\u0627 \u0645\u062D\u062F\u0648\u062F\u06CC\u062A \u0634\u0628\u06A9\u0647)");
+    }).catch(function () {});
+  } catch (e) { console.error("connect error:", e); state.connecting = false; updateUI(); }
 }
 
-// Disconnect
 async function disconnect() {
-  state.connected = false;
-  state.connecting = false;
-  state.startTime = null;
-  removeProxy();
-  await saveState();
-  updateUI();
-  stopStats();
-  showStatus("قطع اتصال");
+  try {
+    state.connected = false; state.connecting = false; state.startTime = null;
+    removeProxy(); await saveState(); updateUI(); stopStats();
+    showStatus("\u0642\u0637\u0639 \u0627\u062A\u0635\u0627\u0644");
+  } catch (e) { console.error("disconnect error:", e); }
 }
 
-// Apply proxy
 function applyProxy(server) {
-  if (chrome && chrome.proxy) {
-    chrome.proxy.settings.set(
-      {
-        value: {
-          mode: "fixed_servers",
-          rules: {
-            singleProxy: {
-              scheme: "http",
-              host: server.ip,
-              port: parseInt(server.port),
-            },
-            bypassList: ["localhost", "127.0.0.1"],
-          },
-        },
-        scope: "regular",
-      },
-      function () {
-        console.log("Proxy applied:", server.ip + ":" + server.port);
-      },
-    );
-  }
+  try {
+    if (chrome && chrome.proxy) {
+      chrome.proxy.settings.set({
+        value: { mode: "fixed_servers", rules: { singleProxy: { scheme: "http", host: server.ip, port: parseInt(server.port) }, bypassList: ["localhost", "127.0.0.1"] } },
+        scope: "regular"
+      }, function () { console.log("Proxy applied:", server.ip + ":" + server.port); });
+    }
+  } catch (e) { console.error("applyProxy error:", e); }
 }
 
-// Remove proxy
 function removeProxy() {
-  if (chrome && chrome.proxy) {
-    chrome.proxy.settings.set(
-      {
-        value: { mode: "direct" },
-        scope: "regular",
-      },
-      function () {
+  try {
+    if (chrome && chrome.proxy) {
+      chrome.proxy.settings.set({ value: { mode: "direct" }, scope: "regular" }, function () {
         console.log("Proxy removed");
-      },
-    );
-  }
+      });
+    }
+  } catch (e) { console.error("removeProxy error:", e); }
 }
 
-// Update UI
 function updateUI() {
-  var connected = state.connected;
-  var connecting = state.connecting;
-  var selectedServer = state.selectedServer;
+  try {
+    var connected = state.connected;
+    var connecting = state.connecting;
+    var sel = state.selectedServer;
 
-  el.statusRing.className = "status-ring";
-  if (connected) {
-    el.statusRing.classList.add("connected");
-    el.statusLabel.textContent = "متصل";
-    if (selectedServer) {
-      var c = selectedServer.country || { flag: "🌐", name: "سرور" };
-      el.statusSub.textContent =
-        c.flag +
-        " " +
-        c.name +
-        " - " +
-        selectedServer.ip +
-        " (" +
-        selectedServer.ping +
-        "ms)";
+    el.statusRing.className = "status-ring";
+    if (connected) {
+      el.statusRing.classList.add("connected");
+      el.statusLabel.textContent = "\u0645\u062A\u0635\u0644";
+      if (sel) {
+        var c = sel.country || { flag: "\uD83C\uDF10", name: "\u0633\u0631\u0648\u0631" };
+        el.statusSub.textContent = c.flag + " " + c.name + " - " + sel.ip + " (" + sel.ping + "ms)";
+      } else el.statusSub.textContent = "\u0627\u062A\u0635\u0627\u0644 \u0628\u0631\u0642\u0631\u0627\u0631 \u0627\u0633\u062A";
+    } else if (connecting) {
+      el.statusRing.classList.add("connecting");
+      el.statusLabel.textContent = "\u062F\u0631 \u062D\u0627\u0644 \u0627\u062A\u0635\u0627\u0644...";
     } else {
-      el.statusSub.textContent = "اتصال برقرار است";
+      el.statusLabel.textContent = "\u063A\u06CC\u0631\u0641\u0639\u0627\u0644";
+      if (!el.statusSub.textContent || el.statusSub.textContent === "\u0628\u0631\u0627\u06CC \u0627\u062A\u0635\u0627\u0644 \u06A9\u0644\u06CC\u06A9 \u06A9\u0646\u06CC\u062F")
+        el.statusSub.textContent = "\u0628\u0631\u0627\u06CC \u0627\u062A\u0635\u0627\u0644 \u06A9\u0644\u06CC\u06A9 \u06A9\u0646\u06CC\u062F";
     }
-  } else if (connecting) {
-    el.statusRing.classList.add("connecting");
-    el.statusLabel.textContent = "در حال اتصال...";
-  } else {
-    el.statusLabel.textContent = "غیرفعال";
-    if (
-      !el.statusSub.textContent ||
-      el.statusSub.textContent === "برای اتصال کلیک کنید"
-    ) {
-      el.statusSub.textContent = "برای اتصال کلیک کنید";
+
+    el.connectBtn.className = "connect-btn";
+    if (connected) { el.connectBtn.classList.add("connected"); el.connectText.textContent = "\u0642\u0637\u0639 \u0627\u062A\u0635\u0627\u0644"; }
+    else if (connecting) { el.connectBtn.classList.add("loading"); el.connectText.textContent = "\u0627\u062A\u0635\u0627\u0644..."; }
+    else el.connectText.textContent = "\u0627\u062A\u0635\u0627\u0644";
+
+    if (!connected) {
+      el.statPing.textContent = "--"; el.statSpeed.textContent = "--";
+      el.statUpload.textContent = "--"; el.statDownload.textContent = "--";
     }
-  }
-
-  el.connectBtn.className = "connect-btn";
-  if (connected) {
-    el.connectBtn.classList.add("connected");
-    el.connectText.textContent = "قطع اتصال";
-  } else if (connecting) {
-    el.connectBtn.classList.add("loading");
-    el.connectText.textContent = "اتصال...";
-  } else {
-    el.connectText.textContent = "اتصال";
-  }
-
-  if (!connected) {
-    el.statPing.textContent = "--";
-    el.statSpeed.textContent = "--";
-    el.statUpload.textContent = "--";
-    el.statDownload.textContent = "--";
-  }
+  } catch (e) { console.error("updateUI error:", e); }
 }
 
-// Stats update with real ping
 var statsInterval = null;
-
 function startStats() {
   stopStats();
   statsInterval = setInterval(async function () {
-    if (!state.connected) {
-      stopStats();
-      return;
-    }
-    if (state.selectedServer) {
-      var realPing = await testPing(
-        state.selectedServer.ip,
-        state.selectedServer.port,
-        2000,
-      );
-      el.statPing.textContent = realPing > 0 ? realPing + "ms" : "timeout";
-    }
-    el.statSpeed.textContent = (Math.random() * 50 + 10).toFixed(1) + " Mbps";
-    el.statUpload.textContent = (Math.random() * 10 + 2).toFixed(1) + " MB/s";
-    el.statDownload.textContent = (Math.random() * 30 + 5).toFixed(1) + " MB/s";
+    try {
+      if (!state.connected) { stopStats(); return; }
+      if (state.selectedServer) {
+        var rp = await testPing(state.selectedServer.ip, state.selectedServer.port, 2000);
+        el.statPing.textContent = rp > 0 ? rp + "ms" : "timeout";
+      }
+      el.statSpeed.textContent = (Math.random() * 50 + 10).toFixed(1) + " Mbps";
+      el.statUpload.textContent = (Math.random() * 10 + 2).toFixed(1) + " MB/s";
+      el.statDownload.textContent = (Math.random() * 30 + 5).toFixed(1) + " MB/s";
+    } catch (e) { console.error("stats interval error:", e); }
   }, 3000);
 }
 
 function stopStats() {
-  if (statsInterval) {
-    clearInterval(statsInterval);
-    statsInterval = null;
-  }
+  try { if (statsInterval) { clearInterval(statsInterval); statsInterval = null; } } catch (e) {}
 }
 
-// Events
 function setupEvents() {
-  el.connectBtn.addEventListener("click", toggleConnection);
-  el.btnAutoConnect.addEventListener("click", autoConnect);
-  el.searchInput.addEventListener("input", function (e) {
-    renderServerList(e.target.value);
-  });
-  el.btnRefresh.addEventListener("click", function () {
-    fetchServers(true);
-  });
-  el.btnSettings.addEventListener("click", function () {
-    if (chrome && chrome.runtime && chrome.runtime.openOptionsPage) {
-      chrome.runtime.openOptionsPage();
-    } else {
-      window.open("options.html", "_blank");
-    }
-  });
+  try {
+    el.connectBtn.addEventListener("click", toggleConnection);
+    el.btnAutoConnect.addEventListener("click", autoConnect);
+    el.searchInput.addEventListener("input", debounce(function (e) {
+      try { renderServerList(e.target.value); } catch (err) {}
+    }, 300));
+    el.btnRefresh.addEventListener("click", function () { fetchServers(true).catch(function(){}); });
+    el.btnSettings.addEventListener("click", function () {
+      try {
+        if (chrome && chrome.runtime && chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
+        else window.open("options.html", "_blank");
+      } catch (e) { console.error("settings click error:", e); }
+    });
+  } catch (e) { console.error("setupEvents error:", e); }
 }

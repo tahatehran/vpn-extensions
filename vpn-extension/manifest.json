@@ -3,13 +3,7 @@
   "name": "MOVTI VPN Shield",
   "version": "1.0.2",
   "description": "فیلترشکن قدرتمند با رابط کاربری مدرن | Powerful VPN with Modern UI",
-  "permissions": [
-    "proxy",
-    "storage",
-    "tabs",
-    "activeTab",
-    "alarms"
-  ],
+  "permissions": ["proxy", "storage", "tabs", "activeTab", "alarms"],
   "host_permissions": [
     "<all_urls>",
     "https://api.myip.com/*",
@@ -17,7 +11,8 @@
     "http://ip-api.com/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background/main.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "popup.html",
@@ -33,5 +28,5 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "privacy_policy_url": "https://tahatehran.github.io/privacy"
+  "privacy_policy_url": "https://movtigroup.me/privacy"
 }
