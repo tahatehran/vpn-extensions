@@ -1,0 +1,94 @@
+# CI Workflow for MOVTI VPN Shield
+# Runs on every PR and push to main
+# Validates: lint, tests, manifest, security
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Validate manifest.json
+        run: npm run validate-manifest
+
+      - name: Run Jest tests
+        run: npm test -- --ci --coverage
+
+      - name: Check security
+        run: npm run security-audit
+
+  build-crx:
+    name: Build CRX (on main branch only)
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CRX
+        run: npm run build
+
+      - name: Upload CRX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: crx-package
+          path: "*.crx"
+
+  release:
+    name: Create Release (on tag)
+    needs: lint-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CRX
+        run: npm run build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.crx"
+          generate_release_notes: true

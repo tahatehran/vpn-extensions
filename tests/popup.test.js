@@ -15,14 +15,18 @@ beforeAll(() => {
 describe("popup.js - Source Analysis", () => {
   test("should have required functions", () => {
     const requiredFunctions = [
+      "initElements",
+      "isPrivateHost",
       "codeToFlag",
       "detectCountry",
       "testPing",
       "verifyConnection",
+      "sendMessage",
       "loadSavedState",
-      "saveState",
+      "refreshServersIfStale",
       "needsRefresh",
       "fetchServers",
+      "showStatus",
       "renderServerList",
       "selectServer",
       "showLoading",
@@ -32,13 +36,10 @@ describe("popup.js - Source Analysis", () => {
       "autoConnect",
       "connect",
       "disconnect",
-      "applyProxy",
-      "removeProxy",
       "updateUI",
       "startStats",
       "stopStats",
       "setupEvents",
-      "initElements",
     ];
 
     requiredFunctions.forEach((fn) => {
@@ -63,7 +64,7 @@ describe("popup.js - Source Analysis", () => {
     expect(popupSource).toContain("COUNTRY_NAMES");
     expect(popupSource).toContain("US:");
     expect(popupSource).toContain("DE:");
-    expect(popupSource).toContain("آمریکا"); // Iran for US
+    expect(popupSource).toContain("United States");
   });
 
   test("should have state object with required properties", () => {
@@ -72,16 +73,17 @@ describe("popup.js - Source Analysis", () => {
     expect(popupSource).toMatch(stateRegex);
   });
 
-  test("should use chrome.storage for persistence", () => {
-    expect(popupSource).toContain("chrome.storage.local");
+  test("should delegate state persistence to background via messages", () => {
+    expect(popupSource).toContain("chrome.runtime.sendMessage");
   });
 
   test("should handle DOMContentLoaded event", () => {
     expect(popupSource).toContain("DOMContentLoaded");
   });
 
-  test("should use chrome.proxy.settings for proxy", () => {
-    expect(popupSource).toContain("chrome.proxy.settings.set");
+  test("should delegate proxy control to background (SET_PROXY message)", () => {
+    expect(popupSource).toContain("SET_PROXY");
+    expect(popupSource).toContain("REMOVE_PROXY");
   });
 
   test("should have event listeners setup", () => {
@@ -89,9 +91,11 @@ describe("popup.js - Source Analysis", () => {
   });
 
   test("should have error handling in fetchServers", () => {
+    const start = popupSource.indexOf("async function fetchServers");
+    const end = popupSource.indexOf("function showStatus");
     const fetchServersSection = popupSource.substring(
-      popupSource.indexOf("async function fetchServers"),
-      popupSource.indexOf("// Show status message"),
+      start,
+      end > start ? end : undefined,
     );
     expect(fetchServersSection).toContain("catch");
     expect(fetchServersSection).toContain("console.error");
@@ -174,7 +178,7 @@ describe("popup.js - needsRefresh function", () => {
 
 describe("popup.js - State Management", () => {
   test("should have initial state with required fields", () => {
-    const stateRegex = /let\s+state\s*=\s*\{([^}]+)\}/s;
+    const stateRegex = /(?:const|let|var)\s+state\s*=\s*\{([^}]+)\}/s;
     const match = popupSource.match(stateRegex);
     expect(match).not.toBeNull();
 
@@ -187,7 +191,6 @@ describe("popup.js - State Management", () => {
   });
 
   test("should have server deduplication logic", () => {
-    expect(popupSource).toContain("Map");
-    expect(popupSource).toContain("Deduplicate");
+    expect(popupSource).toContain("new Map");
   });
 });

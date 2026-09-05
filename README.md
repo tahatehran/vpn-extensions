@@ -1,198 +1,252 @@
-# MOVTIGROUP VPN Extension
+# MOVTI VPN Shield
 
-[English](README.en.md) | [فارسی](README.fa.md) | [中文](README.zh.md)
+[![CI](https://github.com/tahatehran/vpn-extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/tahatehran/vpn-extensions/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/badge/security-audit-passing-brightgreen)](https://github.com/tahatehran/vpn-extensions/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<div align="center">
-  <img src="image/panel-1.png" alt="MOVTIGROUP VPN Panel" width="600">
-  <br>
-  <img src="image/panel-2.png" alt="MOVTIGROUP VPN Interface" width="600">
-  <br>
-  <img src="image/1.png" alt="MOVTIGROUP VPN Server List" width="600">
-</div>
+**MOVTI VPN Shield** is a lightweight, privacy-focused browser extension that routes your traffic through a configurable HTTP proxy with real-time ping measurement. No accounts, no logs, no tracking.
 
-This repository contains the main VPN browser extension for **MOVTIGROUP**. Its purpose is to showcase and document the visual design and layout of the website, representing the company's visual identity. Note that the operational code and backend logic are stored privately in a separate repository.
+> **Status**: Updated for Chrome Web Store certification (v1.0.3)
 
-**GitHub Repository:** [https://github.com/movtigroup/movtigroup/](https://github.com/movtigroup/movtigroup/)
-
-## Introduction
-
-This extension serves as the primary visual design for the MOVTIGROUP website. The focus is on delivering a modern, clean, and responsive user experience that reflects the brand identity through its visual components.
+---
 
 ## Features
 
-### VPN Extension
+- **One-click connect** – Pick a server or auto-connect to the fastest
+- **Real ping** – Measures actual RTT via `fetch` HEAD requests (no fake stats)
+- **Kill switch** – Blocks all traffic if VPN tunnel drops
+- **Auto-refresh** – Server list updates daily from public CDN
+- **HTTPS-only** – All external requests use HTTPS (enforced by CSP)
+- **Minimal permissions** – Only `proxy`, `storage`, `alarms` + specific host permissions
+- **No tracking** – Zero analytics, zero telemetry, zero external scripts
 
-- **Responsive Design:** Optimized for various devices including mobile, tablet, and desktop.
-- **Easy Customization:** Design elements can be easily adjusted to align with the company's visual identity.
-- **Bilingual Support:** Full support for Persian (RTL) and English (LTR) languages.
-- **User-Friendly Documentation:** A clean and well-documented structure for quick navigation and understanding.
-- **Maintainability:** Regular updates and an organized file structure ensure consistent design evolution.
-- **Accessibility:** WCAG 2.1 compliant for better accessibility.
+---
 
-### VPN Extension
+## Quick Start
 
-- 🔒 Secure connection with one click
-- 🌍 300+ servers worldwide
-- 📊 Live connection stats (ping, speed, upload, download)
-- 🎨 Modern dark theme UI
-- 🔄 Auto-update server list
-- 🔍 Server search
-- ⚙️ Advanced settings (kill switch, DNS, auto-connect)
+### Install from Source (Developer Mode)
+
+```bash
+git clone https://github.com/tahatehran/vpn-extensions.git
+cd vpn-extensions
+
+# Install test dependencies
+npm ci
+
+# Run tests
+npm test
+
+# Build CRX package
+npm run build
+```
+
+Then load `vpn-extension/` as an unpacked extension in Chrome/Edge:
+1. Open `chrome://extensions/`
+2. Enable **Developer mode**
+3. Click **Load unpacked** → select `vpn-extension/` folder
+
+---
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm test` | Run Jest test suite (manifest, security, unit) |
+| `npm run lint` | ESLint check on extension JS files |
+| `npm run validate-manifest` | Validate manifest.json against Chrome Store rules |
+| `npm run security-audit` | Full security scan (secrets, tracking, HTTP URLs, CSP) |
+| `npm run build` | Build `.crx` package via `build-crx.sh` |
+
+---
+
+## Chrome Web Store Certification Checklist
+
+### Pre-submission (must pass all)
+
+- [ ] **Manifest V3** – `manifest_version: 3`, `background.service_worker`, `action` (not `browser_action`)
+- [ ] **Single Purpose** – Description < 132 chars, clearly states "VPN proxy"
+- [ ] **Minimal Permissions** – No `tabs`, `activeTab`, `cookies`, `webRequest`, `debugger`
+- [ ] **HTTPS-only host_permissions** – No `http://`, no `<all_urls>`
+- [ ] **Content Security Policy** – Explicit `content_security_policy.extension_pages`
+- [ ] **Privacy Policy URL** – HTTPS, matches actual data practices
+- [ ] **Homepage URL** – HTTPS landing page with support contact
+- [ ] **Author field** – Name + email in manifest
+- [ ] **No inline scripts/handlers** – All JS in external files
+- [ ] **No eval/Function/document.write** – Security audit passes
+- [ ] **No hardcoded secrets** – API keys, tokens, private keys absent
+- [ ] **No tracking code** – No GA, Mixpanel, Facebook Pixel, etc.
+- [ ] **Kill switch implemented** – Not just a UI toggle
+- [ ] **No fake functionality** – Stats are real or hidden (no `Math.random()` speed)
+- [ ] **Options page** – Uses `options_ui` (V3), not deprecated `options_page`
+- [ ] **Icons exist** – 16, 48, 128 PNG files referenced correctly
+- [ ] **Test suite passes** – `npm test` exits 0
+- [ ] **Security audit passes** – `npm run security-audit` exits 0
+
+### Store Listing Requirements
+
+- [ ] **Screenshots** – 1280×800 (min 1, max 5), show actual UI
+- [ ] **Promo tile** – 440×280 (optional but recommended)
+- [ ] **Detailed description** – Explains what data is accessed and why
+- [ ] **Support link** – GitHub Issues or email in store listing
+- [ ] **Single category** – Productivity (or Developer Tools)
+
+---
 
 ## Project Structure
 
 ```
-movtigroup/
+vpn-extensions/
 ├── .github/
-│   ├── FUNDING.yml
-│   └── workflows/
+│   └── workflows/ci.yml          # CI: lint, test, security, build
+├── tests/
+│   ├── helpers.js                # Shared test utilities
+│   ├── setup.js                  # Jest mocks (chrome APIs, DOM, fetch)
+│   ├── validate-manifest.js      # Standalone manifest validator
+│   ├── security-audit.js         # Security scanner (run via npm)
+│   ├── manifest.test.js          # Manifest V3 compliance tests
+│   ├── security.test.js          # Security pattern tests
+│   ├── background.test.js        # Background SW function tests
+│   ├── popup.test.js             # Popup UI/logic tests
+│   └── options.test.js           # Options page tests
 ├── vpn-extension/
-│   ├── manifest.json
-│   ├── popup.html
-│   ├── popup.css
-│   ├── popup.js
-│   ├── background.js
-│   ├── options.html
-│   ├── options.css
-│   ├── options.js
-│   ├── icons/
+│   ├── manifest.json             # MV3 manifest (CSP, permissions, etc.)
+│   ├── background.js             # Service worker (proxy, kill switch, alarms)
+│   ├── popup.html / .js / .css   # Main UI (connect, server list, stats)
+│   ├── options.html / .js / .css # Settings (kill switch, geo, DNS, test)
+│   ├── icons/                    # 16/48/128 PNG icons
 │   └── README.md
-├── build-crx.sh
-├── .gitignore
-├── .dockerignore
-├── AGENTS.md
-├── CHANGELOG
-├── CLAUDE.md
-├── CONTRIBUTING.md
-├── DESIGN.md
-├── LICENSE
-├── PASS.md
-├── PHILOSOPHY.md
-├── README.md
-├── README.en.md
-├── README.fa.md
-└── README.zh.md
+├── build-crx.sh                  # CRX/ZIP builder
+├── package.json                  # npm scripts, jest, eslint config
+└── LICENSE
 ```
-
-## Getting Started
-
-### Prerequisites
-
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- For development: Code editor (VS Code, PhpStorm, etc.)
-- Node.js (for building CRX files)
-
-### Installation & Usage
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/movtigroup/movtigroup.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd movtigroup
-   ```
-
-3. Open the extension folder in your browser or use a local server.
-
-### Building CRX Files
-
-To build CRX files for Chrome and Edge browsers:
-
-```bash
-# Make the script executable
-chmod +x build-crx.sh
-
-# Build all packages
-./build-crx.sh all
-
-# Build specific browser
-./build-crx.sh chrome
-./build-crx.sh edge
-./build-crx.sh firefox
-```
-
-### Installing Extensions
-
-#### Chrome:
-
-1. Open `chrome://extensions/`
-2. Enable **Developer mode**
-3. Drag and drop the `.crx` file
-
-#### Edge:
-
-1. Open `edge://extensions/`
-2. Enable **Developer mode**
-3. Drag and drop the `.crx` file
-
-#### Firefox:
-
-1. Open `about:debugging#/runtime/this-firefox`
-2. Click **Load Temporary Add-on**
-3. Select the `manifest.json` file from the extracted ZIP
-
-## Versioning
-
-This project uses Semantic Versioning. To bump version:
-
-1. Go to Actions → Version Bump
-2. Select bump type (patch/minor/major)
-3. Run workflow
-
-Or use the command line:
-
-```bash
-# Install dependencies
-npm install -g semantic-release
-
-# Auto bump version
-npm run bump
-```
-
-## Creating Releases
-
-Releases are automated through GitHub Actions:
-
-1. Push a tag with version format `v*`
-2. The workflow automatically:
-   - Builds CRX files for Chrome and Edge
-   - Creates ZIP for Firefox
-   - Creates GitHub Release with all artifacts
-
-```bash
-# Create a release
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-## Documentation
-
-- [DESIGN.md](DESIGN.md) - Design system documentation
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [PHILOSOPHY.md](PHILOSOPHY.md) - Project philosophy
-- [PASS.md](PASS.md) - Security and access
-- [CHANGELOG](CHANGELOG) - Change history
-
-## Important Notes
-
-- This repository is solely for presenting the visual design and layout components of the website.
-- Code related to operational functionality and traffic management is maintained privately in a separate repository.
-- Updates, improvements, and design revisions are published here.
-- This project is released under the [MIT](LICENSE) License.
-
-## Usage
-
-Feel free to review the extension files in this repository. For any suggestions or feedback to improve the extension, please use the **Issues** section on GitHub or contact our team directly.
-
-## Contact
-
-- **GitHub:** [https://github.com/movtigroup/](https://github.com/movtigroup/)
-- **Website:** [https://movtigroup.com](https://movtigroup.com)
 
 ---
 
-**Version:** 1.0.1 | **Last Updated:** 2026-07-01
+## Architecture
+
+### Background Service Worker (`background.js`)
+
+- **Proxy management** – `chrome.proxy.settings.set` with error handling
+- **Kill switch watchdog** – Runs every minute via `chrome.alarms`; verifies tunnel via `api.myip.com`
+- **Auto-refresh** – Daily alarm fetches fresh proxy list from CDN
+- **Message bus** – Handles `GET_STATUS`, `SET_PROXY`, `REMOVE_PROXY`, `VERIFY_CONNECTION`, `AUTO_CONNECT`, `FORCE_UPDATE`, `SAVE_SETTINGS`
+- **Input validation** – `sanitizeServer()`, `isPrivateHost()`, `sanitizeSettings()`
+
+### Popup (`popup.js` / `popup.html`)
+
+- Server list with country flags (via `ipinfo.io` + `ip-api.com` fallback)
+- Real ping test (HEAD request via proxy, `no-cors` mode)
+- Connection state synced with background via messages
+- Stats show **only real ping**; speed/up/down hidden (no fake data)
+
+### Options (`options.js` / `options.html`)
+
+- Kill switch toggle (persists to background)
+- Geo provider selector (ipinfo.io / ip-api.com)
+- DNS selector (UI only – documented as informational)
+- Server test suite (tests top 20, shows real ping vs reported)
+
+---
+
+## Security Model
+
+| Layer | Implementation |
+|-------|----------------|
+| **Network** | All external fetches use HTTPS; `isPrivateHost()` blocks RFC1918/loopback |
+| **Input** | `sanitizeServer()` validates IP format, port range, deduplicates by IP:PORT |
+| **CSP** | `script-src 'self'`, `connect-src` allowlisted to 4 HTTPS endpoints |
+| **Permissions** | Only `proxy`, `storage`, `alarms` + 4 specific HTTPS host patterns |
+| **Messages** | Background validates every message type and payload |
+| **Proxy errors** | `chrome.proxy.onError` triggers kill-switch if enabled |
+
+---
+
+## Testing
+
+```bash
+# Full test suite
+npm test
+
+# With coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+
+# Security only
+npm run security-audit
+
+# Manifest only
+npm run validate-manifest
+```
+
+### Test Categories
+
+| File | Focus |
+|------|-------|
+| `manifest.test.js` | MV3 structure, permissions, CSP, icons, store requirements |
+| `security.test.js` | No secrets, no tracking, no dangerous patterns, HTTPS enforcement |
+| `background.test.js` | Functions, alarms, kill-switch, message handling, validation |
+| `popup.test.js` | Functions, state, ping logic, flag conversion, needsRefresh |
+| `options.test.js` | Settings, server testing, UI handlers, security |
+
+---
+
+## Building for Release
+
+```bash
+# Build CRX for Chrome/Edge (requires build-crx.sh + pem key)
+npm run build
+
+# Output: movti-vpn-shield-v1.0.3.crx
+```
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every PR and tag:
+- **PR**: lint → validate-manifest → test → security-audit
+- **main**: same + build CRX artifact
+- **tag `v*`**: same + create GitHub Release with CRX
+
+---
+
+## Privacy
+
+MOVTI VPN Shield **does not collect any personal data**.
+
+- **No accounts**, **no login**, **no telemetry**
+- **No analytics** (Google Analytics, Mixpanel, etc.)
+- **Proxy list** fetched from public CDN (`cdn.jsdelivr.net`)
+- **IP verification** uses `api.myip.com` (returns your exit IP only)
+- **Geo lookup** uses `ipinfo.io` / `ip-api.com` (server IP only)
+- All settings stored locally via `chrome.storage.local`
+
+See [Privacy Policy](https://tahatehran.github.io/vpn-extensions/privacy) for details.
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch
+3. Run `npm test` and `npm run security-audit` – **must pass**
+4. Open a PR with clear description
+5. CI must pass (GitHub Actions)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+
+MIT License – see [LICENSE](LICENSE) for details.
+
+---
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/tahatehran/vpn-extensions/issues)
+- **Email**: support@movtigroup.com
+- **Website**: [https://tahatehran.github.io/vpn-extensions/](https://tahatehran.github.io/vpn-extensions/)
+
+---
+
+**Version**: 1.0.3 | **Updated**: 2026-09-04

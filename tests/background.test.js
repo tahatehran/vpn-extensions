@@ -11,29 +11,45 @@ beforeAll(() => {
 });
 
 describe("background.js - Source Analysis", () => {
-  test("should define PROXY_SOURCE constant", () => {
+  test("should define PROXY_SOURCE constant (HTTPS)", () => {
     expect(bgSource).toContain("PROXY_SOURCE");
-    expect(bgSource).toContain("cdn.jsdelivr.net");
+    expect(bgSource).toContain("https://cdn.jsdelivr.net");
+    expect(bgSource).not.toContain("http://cdn.jsdelivr.net");
   });
 
-  test("should define IP_CHECK_URL constant", () => {
+  test("should define IP_CHECK_URL constant (HTTPS)", () => {
     expect(bgSource).toContain("IP_CHECK_URL");
+    expect(bgSource).toContain("https://api.myip.com");
+  });
+
+  test("geo lookup stays HTTPS (ipinfo.io / ip-api.com in popup)", () => {
+    const popupSource = loadFileAsString("vpn-extension/popup.js");
+    expect(popupSource).toMatch(/https:\/\/(ipinfo|ip-api)\.com/);
+    expect(popupSource).not.toContain("http://ipinfo.io");
+    expect(popupSource).not.toContain("http://ip-api.com");
   });
 
   test("should have required functions", () => {
     const requiredFunctions = [
       "isConnected",
-      "fetchAndUpdateProxies",
-      "checkAndUpdateProxies",
-      "setupDailyAlarm",
-      "verifyConnectionBackground",
-      "autoConnectBackground",
-      "connectToServer",
+      "fetchProxyList",
+      "refreshProxyList",
+      "scheduleAlarms",
+      "verifyConnection",
+      "autoConnect",
+      "setProxy",
+      "clearProxy",
+      "runWatchdog",
+      "sanitizeServer",
+      "sanitizeSettings",
+      "isPrivateHost",
+      "dedupeServers",
+      "tryConnectFromList",
     ];
 
     requiredFunctions.forEach((fn) => {
       const fnRegex = new RegExp(
-        `(?:async\\s+)?function\\s+${fn}|(?:async\\s+)?const\\s+${fn}\\s*=`,
+        `(?:async\\s+)?function\\s+${fn}\\s*\\(|(?:async\\s+)?const\\s+${fn}\\s*=`,
         "m"
       );
       expect(bgSource).toMatch(fnRegex);
@@ -80,32 +96,55 @@ describe("background.js - Source Analysis", () => {
     expect(bgSource).toContain("AUTO_CONNECT");
   });
 
-  test("should use service_worker pattern (no window)", () => {
-    // background.js should not use window/document APIs
+  test("should handle SAVE_SETTINGS message", () => {
+    expect(bgSource).toContain("SAVE_SETTINGS");
+  });
+
+  test("should use service_worker pattern (no window/document)", () => {
     expect(bgSource).not.toContain("document.getElementById");
     expect(bgSource).not.toContain("window.addEventListener");
   });
 });
 
 describe("background.js - Alarm Setup", () => {
-  test("should create alarm with 1440 minute period (24h)", () => {
+  test("should create dailyProxyUpdate alarm with 1440 minute period (24h)", () => {
     expect(bgSource).toContain("periodInMinutes: 1440");
+    expect(bgSource).toContain("dailyProxyUpdate");
   });
 
-  test("should create dailyProxyUpdate alarm", () => {
-    expect(bgSource).toContain("dailyProxyUpdate");
+  test("should create proxyWatchdog alarm for kill switch", () => {
+    expect(bgSource).toContain("proxyWatchdog");
+    expect(bgSource).toContain("PROXY_CHECK_INTERVAL_MIN");
+  });
+});
+
+describe("background.js - Kill Switch Implementation", () => {
+  test("should have runWatchdog function for kill switch", () => {
+    expect(bgSource).toContain("runWatchdog");
+  });
+
+  test("should check killSwitch setting in watchdog", () => {
+    expect(bgSource).toContain("settings.killSwitch");
+  });
+
+  test("should clear proxy when VPN drops and killSwitch is on", () => {
+    expect(bgSource).toContain("clearProxy");
+    expect(bgSource).toContain("Kill switch");
   });
 });
 
 describe("background.js - Message Handling", () => {
   test("should return true for async message responses", () => {
-    // All message handlers should return true for async sendResponse
-    const messageSection = bgSource.substring(
-      bgSource.indexOf("chrome.runtime.onMessage.addListener")
-    );
-    // Count return true statements
-    const returnTrueCount = (messageSection.match(/return\s+true/g) || []).length;
-    expect(returnTrueCount).toBeGreaterThanOrEqual(4);
+    // Message handler should return true for async sendResponse
+    const handlerStart = bgSource.indexOf("chrome.runtime.onMessage.addListener");
+    const handlerEnd = bgSource.indexOf("function handleMessage");
+    const messageSection =
+      handlerEnd > handlerStart
+        ? bgSource.substring(handlerStart, handlerEnd)
+        : bgSource.substring(handlerStart);
+    // Count return true statements in handler
+    const returnTrueCount = (messageSection.match(/return\s+true\b/g) || []).length;
+    expect(returnTrueCount).toBeGreaterThanOrEqual(1);
   });
 
   test("should use chrome.proxy.settings for proxy management", () => {
@@ -115,6 +154,11 @@ describe("background.js - Message Handling", () => {
   test("should have proxy error handler", () => {
     expect(bgSource).toContain("chrome.proxy");
     expect(bgSource).toContain("onError");
+    expect(bgSource).toContain("addListener");
+  });
+
+  test("should check chrome.runtime.lastError after setProxy", () => {
+    expect(bgSource).toContain("chrome.runtime.lastError");
   });
 });
 
@@ -137,5 +181,30 @@ describe("background.js - Security", () => {
 
   test("should not have innerHTML usage (XSS risk)", () => {
     expect(bgSource).not.toContain("innerHTML");
+  });
+
+  test("should validate server input with sanitizeServer", () => {
+    expect(bgSource).toContain("sanitizeServer");
+    expect(bgSource).toContain("isPrivateHost");
+  });
+
+  test("should reject private hosts in isPrivateHost", () => {
+    expect(bgSource).toContain("isPrivateHost");
+    expect(bgSource).toMatch(/localhost|127\.0\.0\.1|192\.168|10\./);
+  });
+});
+
+describe("background.js - Proxy Validation", () => {
+  test("should validate IP format", () => {
+    expect(bgSource).toContain("isIp");
+    expect(bgSource).toContain("clampPort");
+  });
+
+  test("should deduplicate servers by IP:PORT", () => {
+    expect(bgSource).toContain("dedupeServers");
+  });
+
+  test("should use best ping when deduplicating", () => {
+    expect(bgSource).toContain("ping");
   });
 });

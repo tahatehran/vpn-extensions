@@ -1,237 +1,190 @@
 /* ============================================
    MOVTI VPN Shield - Background Service Worker
-   Daily auto-update of proxy list
+   Daily auto-update of proxy list + kill switch
    ============================================ */
 
-// Proxy data source
 const PROXY_SOURCE =
   "https://cdn.jsdelivr.net/gh/tahatehran/worker-vpn-proxy/best_proxies.json";
 
-// IP check URL for connection verification
 const IP_CHECK_URL = "https://api.myip.com";
+// Geo lookup (ipinfo.io / ip-api.com) is done in popup.js; both are HTTPS.
 
-// Helper: check if currently connected
-async function isConnected() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["connected"], (data) => {
-      resolve(data.connected === true);
+const ALARM_NAME = "dailyProxyUpdate";
+const PROXY_ALARM_NAME = "proxyWatchdog";
+const PROXY_CHECK_INTERVAL_MIN = 1;
+
+const DEFAULT_SETTINGS = {
+  autoConnect: false,
+  killSwitch: false,
+  dns: "default",
+  geoProvider: "ipinfo",
+};
+
+// ----- helpers --------------------------------------------------------
+
+const storage = {
+  get(keys) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(keys, (data) => resolve(data || {}));
     });
-  });
-}
+  },
+  set(items) {
+    return new Promise((resolve) => chrome.storage.local.set(items, resolve));
+  },
+};
 
-// Install handler
-chrome.runtime.onInstalled.addListener((details) => {
-  console.log("MOVTI VPN Shield installed:", details.reason);
-
-  // Set default settings
-  chrome.storage.local.set({
-    connected: false,
-    selectedServer: null,
-    serverList: [],
-    lastUpdate: null,
-    settings: {
-      autoConnect: false,
-      killSwitch: false,
-      dns: "default",
-    },
-  });
-
-  // Schedule daily update alarm
-  setupDailyAlarm();
-
-  // First fetch
-  fetchAndUpdateProxies();
-});
-
-// Startup handler - schedule alarm on browser start
-chrome.runtime.onStartup.addListener(async () => {
-  setupDailyAlarm();
-  const connected = await isConnected();
-  if (!connected) {
-    checkAndUpdateProxies();
-  } else {
-    console.log("VPN is connected, skipping proxy update on startup");
-  }
-});
-
-// Setup daily alarm (every 24 hours)
-function setupDailyAlarm() {
-  chrome.alarms.create("dailyProxyUpdate", {
-    periodInMinutes: 1440, // 24 hours
-  });
-  console.log("Daily proxy update alarm scheduled");
-}
-
-// Check if update is needed (older than 24h) - skip if connected
-async function checkAndUpdateProxies() {
-  const connected = await isConnected();
-  if (connected) {
-    console.log("VPN is connected, skipping proxy update check");
-    return;
-  }
-
-  chrome.storage.local.get(["lastUpdate"], (data) => {
-    if (!data.lastUpdate) {
-      fetchAndUpdateProxies();
-      return;
-    }
-
-    const last = new Date(data.lastUpdate).getTime();
-    const now = Date.now();
-    const hoursSince = (now - last) / (1000 * 60 * 60);
-
-    if (hoursSince >= 24) {
-      fetchAndUpdateProxies();
-    }
-  });
-}
-
-// Fetch and update proxy list
-async function fetchAndUpdateProxies() {
-  console.log("Fetching updated proxy list...");
+function isPrivateHost(url) {
   try {
-    const response = await fetch(PROXY_SOURCE);
-    const json = await response.json();
-    const proxies = json.proxies || [];
-
-    // Deduplicate by IP:PORT and keep best ping
-    const proxyMap = new Map();
-    for (const p of proxies) {
-      const key = `${p.ip}:${p.port}`;
-      if (!proxyMap.has(key) || p.time_ms < proxyMap.get(key).time_ms) {
-        proxyMap.set(key, p);
-      }
-    }
-
-    const servers = [];
-    let index = 0;
-    for (const [key, proxy] of proxyMap) {
-      servers.push({
-        id: index++,
-        ip: proxy.ip,
-        port: proxy.port,
-        ping: Math.round(proxy.time_ms),
-        status: proxy.status,
-        proxyStr: proxy.proxy_str,
-      });
-    }
-
-    // Sort by ping
-    servers.sort((a, b) => a.ping - b.ping);
-
-    chrome.storage.local.set({
-      serverList: servers,
-      lastUpdate: json.timestamp || new Date().toISOString(),
-    });
-
-    console.log(`Proxy list updated: ${servers.length} servers`);
-  } catch (error) {
-    console.error("Failed to update proxies:", error);
+    const u = new URL(url);
+    if (u.protocol !== "https:") return true;
+    const h = u.hostname.toLowerCase();
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0")
+      return true;
+    if (/^(10|127|169\.254|172\.(1[6-9]|2\d|3[01])|192\.168)\./.test(h))
+      return true;
+    if (h.endsWith(".local") || h.endsWith(".internal")) return true;
+    return false;
+  } catch {
+    return true;
   }
 }
 
-// Alarm handler - skip if connected
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === "dailyProxyUpdate") {
-    const connected = await isConnected();
-    if (connected) {
-      console.log("VPN is connected, skipping scheduled proxy update");
-      return;
+function isIp(s) {
+  return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(String(s || ""));
+}
+
+function clampPort(p) {
+  const n = parseInt(p, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 65535) return null;
+  return n;
+}
+
+function sanitizeServer(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  if (!isIp(raw.ip)) return null;
+  const port = clampPort(raw.port);
+  if (port === null) return null;
+  // Source JSON reports latency as time_ms; accept ping as an alias
+  const latency = raw.ping != null ? raw.ping : raw.time_ms;
+  const ping = Number.isFinite(Number(latency))
+    ? Math.max(0, Math.round(Number(latency)))
+    : null;
+  return {
+    ip: raw.ip,
+    port,
+    ping: ping == null ? null : ping,
+    country: typeof raw.country === "string" ? raw.country : null,
+    source: typeof raw.source === "string" ? raw.source : null,
+  };
+}
+
+function dedupeServers(list) {
+  const map = new Map();
+  for (const s of list) {
+    const key = `${s.ip}:${s.port}`;
+    const prev = map.get(key);
+    if (!prev || (s.ping != null && (prev.ping == null || s.ping < prev.ping))) {
+      map.set(key, s);
     }
-    console.log("Daily proxy update triggered");
-    fetchAndUpdateProxies();
   }
-});
+  return Array.from(map.values());
+}
 
-// Proxy error handler
-if (chrome.proxy?.onError) {
-  chrome.proxy.onError.addListener((details) => {
-    console.error("Proxy error:", details);
+async function getSettings() {
+  const { settings } = await storage.get(["settings"]);
+  return Object.assign({}, DEFAULT_SETTINGS, settings || {});
+}
 
-    // Update connection state on error
-    chrome.storage.local.set({ connected: false });
+async function isConnected() {
+  const { connected } = await storage.get(["connected"]);
+  return connected === true;
+}
 
-    // Notify popup
-    chrome.runtime.sendMessage({
-      type: "PROXY_ERROR",
-      error: details.error,
+// ----- proxy control --------------------------------------------------
+
+function setProxy(server) {
+  return new Promise((resolve, reject) => {
+    const config = server
+      ? {
+          value: {
+            mode: "fixed_servers",
+            rules: {
+              singleProxy: {
+                scheme: "http",
+                host: server.ip,
+                port: server.port,
+              },
+              bypassList: ["localhost", "127.0.0.1", "<local>"],
+            },
+          },
+          scope: "regular",
+        }
+      : { value: { mode: "direct" }, scope: "regular" };
+    chrome.proxy.settings.set(config, () => {
+      const err = chrome.runtime.lastError;
+      if (err) reject(new Error(err.message));
+      else resolve();
     });
   });
 }
 
-// Message handler
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "GET_STATUS") {
-    chrome.storage.local.get(
-      ["connected", "selectedServer", "lastUpdate"],
-      (data) => {
-        sendResponse(data);
-      },
-    );
-    return true;
+async function clearProxy() {
+  try {
+    await setProxy(null);
+  } catch (e) {
+    console.error("clearProxy failed:", e);
   }
+  await storage.set({ connected: false, selectedServer: null });
+}
 
-  if (message.type === "FORCE_UPDATE") {
-    fetchAndUpdateProxies().then(() => {
-      sendResponse({ success: true });
+// ----- proxy list -----------------------------------------------------
+
+async function fetchProxyList() {
+  if (isPrivateHost(PROXY_SOURCE)) {
+    throw new Error("Refusing to fetch from non-public host");
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const resp = await fetch(PROXY_SOURCE, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
     });
-    return true;
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!data || !Array.isArray(data.proxies)) {
+      throw new Error("Invalid proxy payload");
+    }
+    const cleaned = data.proxies.map(sanitizeServer).filter(Boolean);
+    return {
+      servers: dedupeServers(cleaned),
+      timestamp: data.timestamp || new Date().toISOString(),
+    };
+  } finally {
+    clearTimeout(timer);
   }
+}
 
-  if (message.type === "SET_PROXY") {
-    const { server } = message;
-    chrome.proxy.settings.set(
-      {
-        value: {
-          mode: "fixed_servers",
-          rules: {
-            singleProxy: {
-              scheme: "http",
-              host: server.ip,
-              port: parseInt(server.port),
-            },
-            bypassList: ["localhost", "127.0.0.1"],
-          },
-        },
-        scope: "regular",
-      },
-      () => {
-        sendResponse({ success: true });
-      },
-    );
-    return true;
+async function refreshProxyList() {
+  if (await isConnected()) {
+    console.log("Skipping proxy refresh while connected");
+    return { skipped: true };
   }
-
-  if (message.type === "REMOVE_PROXY") {
-    chrome.proxy.settings.set(
-      {
-        value: { mode: "direct" },
-        scope: "regular",
-      },
-      () => {
-        sendResponse({ success: true });
-      },
-    );
-    return true;
+  try {
+    const { servers, timestamp } = await fetchProxyList();
+    await storage.set({ serverList: servers, lastUpdate: timestamp });
+    return { servers: servers.length, timestamp };
+  } catch (e) {
+    console.error("refreshProxyList failed:", e);
+    return { error: e.message };
   }
+}
 
-  if (message.type === "VERIFY_CONNECTION") {
-    verifyConnectionBackground().then((result) => {
-      sendResponse(result);
-    });
-    return true;
-  }
+// ----- connection verify ---------------------------------------------
 
-  if (message.type === "AUTO_CONNECT") {
-    autoConnectBackground().then((result) => {
-      sendResponse(result);
-    });
-    return true;
-  }
-});
-
-// Verify connection from background
-async function verifyConnectionBackground() {
+async function verifyConnection() {
+  if (isPrivateHost(IP_CHECK_URL)) return { success: false };
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
@@ -240,88 +193,201 @@ async function verifyConnectionBackground() {
       cache: "no-store",
     });
     clearTimeout(timer);
+    if (!resp.ok) return { success: false };
     const data = await resp.json();
     if (data && data.ip) {
       return { success: true, ip: data.ip, country: data.country || "" };
     }
     return { success: false };
-  } catch (e) {
-    return { success: false, error: e.message };
+  } catch {
+    return { success: false };
   }
 }
 
-// Auto-connect from background
-async function autoConnectBackground() {
-  try {
-    // Get servers from storage
-    const data = await chrome.storage.local.get(["serverList"]);
-    const servers = data.serverList || [];
+// ----- install / startup ---------------------------------------------
 
-    if (servers.length === 0) {
-      await fetchAndUpdateProxies();
-      const newData = await chrome.storage.local.get(["serverList"]);
-      const newServers = newData.serverList || [];
-
-      if (newServers.length === 0) {
-        return { success: false, error: "No servers available" };
-      }
-
-      // Try first server
-      const server = newServers[0];
-      await connectToServer(server);
-      return { success: true, server };
-    }
-
-    // Find fastest working server
-    const workingServers = servers.filter((s) => s.working !== false);
-
-    if (workingServers.length === 0) {
-      return { success: false, error: "No working servers found" };
-    }
-
-    const fastest = workingServers[0];
-    await connectToServer(fastest);
-    return { success: true, server: fastest };
-  } catch (e) {
-    return { success: false, error: e.message };
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log("MOVTI VPN Shield installed:", details.reason);
+  if (details.reason === "install") {
+    // Fresh install: reset everything to defaults
+    await storage.set({
+      connected: false,
+      selectedServer: null,
+      serverList: [],
+      lastUpdate: null,
+      settings: DEFAULT_SETTINGS,
+    });
+  } else {
+    // Update: preserve user settings, clear runtime state
+    const prev = await getSettings();
+    await storage.set({
+      connected: false,
+      selectedServer: null,
+      settings: prev,
+    });
   }
-}
+  await scheduleAlarms();
+  await refreshProxyList();
+});
 
-// Connect to a specific server
-async function connectToServer(server) {
-  return new Promise((resolve, reject) => {
-    chrome.proxy.settings.set(
-      {
-        value: {
-          mode: "fixed_servers",
-          rules: {
-            singleProxy: {
-              scheme: "http",
-              host: server.ip,
-              port: parseInt(server.port),
-            },
-            bypassList: ["localhost", "127.0.0.1"],
-          },
-        },
-        scope: "regular",
-      },
-      async () => {
-        // Wait a bit for proxy to apply
-        await new Promise((r) => setTimeout(r, 1000));
+chrome.runtime.onStartup.addListener(async () => {
+  await scheduleAlarms();
+  const settings = await getSettings();
+  if (!settings.killSwitch) return;
+  if (!(await isConnected())) {
+    // kill switch was on but VPN dropped while browser was closed
+    await clearProxy();
+  }
+});
 
-        // Verify connection
-        const verification = await verifyConnectionBackground();
-        if (verification.success) {
-          chrome.storage.local.set({
-            connected: true,
-            selectedServer: server,
-          });
-          resolve(verification);
-        } else {
-          chrome.storage.local.set({ connected: false });
-          reject(new Error("Connection verification failed"));
-        }
-      },
-    );
+async function scheduleAlarms() {
+  chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1440 });
+  chrome.alarms.create(PROXY_ALARM_NAME, {
+    periodInMinutes: PROXY_CHECK_INTERVAL_MIN,
   });
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === ALARM_NAME) {
+    await refreshProxyList();
+  } else if (alarm.name === PROXY_ALARM_NAME) {
+    await runWatchdog();
+  }
+});
+
+// ----- kill switch (proxy watchdog) ----------------------------------
+
+async function runWatchdog() {
+  const settings = await getSettings();
+  if (!settings.killSwitch) return;
+  const connected = await isConnected();
+  if (!connected) return; // user is intentionally offline
+  const result = await verifyConnection();
+  if (!result.success) {
+    console.warn("Kill switch: VPN tunnel appears down, clearing proxy");
+    await clearProxy();
+  }
+}
+
+// ----- proxy error handler -------------------------------------------
+
+if (chrome.proxy && chrome.proxy.onError && chrome.proxy.onError.addListener) {
+  chrome.proxy.onError.addListener(async (details) => {
+    console.error("Proxy error:", details);
+    const settings = await getSettings();
+    await storage.set({ connected: false });
+    if (settings.killSwitch) {
+      await clearProxy();
+    }
+  });
+}
+
+// ----- message handler -----------------------------------------------
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  handleMessage(message).then(sendResponse).catch((err) => {
+    sendResponse({ error: err.message || String(err) });
+  });
+  return true; // async response
+});
+
+async function handleMessage(message) {
+  if (!message || typeof message !== "object") {
+    return { error: "invalid message" };
+  }
+  switch (message.type) {
+    case "GET_STATUS": {
+      const data = await storage.get([
+        "connected",
+        "selectedServer",
+        "lastUpdate",
+        "serverList",
+        "settings",
+      ]);
+      return data;
+    }
+    case "FORCE_UPDATE": {
+      const result = await refreshProxyList();
+      return { success: !result.error, result };
+    }
+    case "SET_PROXY": {
+      const server = sanitizeServer(message.server);
+      if (!server) return { success: false, error: "invalid server" };
+      await setProxy(server);
+      await storage.set({ connected: true, selectedServer: server });
+      return { success: true };
+    }
+    case "REMOVE_PROXY": {
+      await clearProxy();
+      return { success: true };
+    }
+    case "VERIFY_CONNECTION": {
+      return await verifyConnection();
+    }
+    case "AUTO_CONNECT": {
+      return await autoConnect();
+    }
+    case "SAVE_SETTINGS": {
+      const clean = sanitizeSettings(message.settings || {});
+      await storage.set({ settings: clean });
+      return { success: true, settings: clean };
+    }
+    default:
+      return { error: `unknown message: ${message.type}` };
+  }
+}
+
+function sanitizeSettings(input) {
+  const out = Object.assign({}, DEFAULT_SETTINGS);
+  if (typeof input.autoConnect === "boolean") out.autoConnect = input.autoConnect;
+  if (typeof input.killSwitch === "boolean") out.killSwitch = input.killSwitch;
+  if (typeof input.dns === "string" && /^(default|cloudflare|google|opendns)$/.test(input.dns)) {
+    out.dns = input.dns;
+  }
+  if (typeof input.geoProvider === "string" && /^(ipinfo|ipapi)$/.test(input.geoProvider)) {
+    out.geoProvider = input.geoProvider;
+  }
+  return out;
+}
+
+// ----- auto connect --------------------------------------------------
+
+async function autoConnect() {
+  const { serverList } = await storage.get(["serverList"]);
+  const servers = Array.isArray(serverList) ? serverList : [];
+  if (servers.length === 0) {
+    const refresh = await refreshProxyList();
+    if (refresh.error) {
+      return { success: false, error: "No servers available" };
+    }
+    const { serverList: list2 } = await storage.get(["serverList"]);
+    if (!Array.isArray(list2) || list2.length === 0) {
+      return { success: false, error: "No servers available" };
+    }
+    return await tryConnectFromList(list2);
+  }
+  return await tryConnectFromList(servers);
+}
+
+async function tryConnectFromList(servers) {
+  const usable = servers
+    .filter((s) => s && s.ping != null)
+    .sort((a, b) => a.ping - b.ping);
+  if (usable.length === 0) {
+    return { success: false, error: "No servers with ping info" };
+  }
+  const best = usable[0];
+  try {
+    await setProxy(best);
+    const verify = await verifyConnection();
+    if (!verify.success) {
+      await clearProxy();
+      return { success: false, error: "verification failed" };
+    }
+    await storage.set({ connected: true, selectedServer: best, startTime: Date.now() });
+    return { success: true, server: best, ip: verify.ip, country: verify.country };
+  } catch (e) {
+    await clearProxy();
+    return { success: false, error: e.message };
+  }
 }

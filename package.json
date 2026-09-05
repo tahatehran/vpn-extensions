@@ -1,7 +1,7 @@
 {
   "name": "movti-vpn-shield",
-  "version": "1.0.1",
-  "description": "MOVTI VPN Shield - Browser Extension",
+  "version": "1.0.3",
+  "description": "MOVTI VPN Shield - One-click VPN proxy with real ping measurement",
   "private": true,
   "scripts": {
     "test": "jest --verbose",
@@ -10,7 +10,9 @@
     "lint": "eslint vpn-extension/**/*.js --no-eslintrc -c .eslintrc.json",
     "lint:fix": "eslint vpn-extension/**/*.js --no-eslintrc -c .eslintrc.json --fix",
     "validate-manifest": "node tests/validate-manifest.js",
-    "debug": "echo 'Open tests/debug.html in browser to debug'"
+    "security-audit": "node tests/security-audit.js",
+    "debug": "echo 'Open tests/debug.html in browser to debug'",
+    "build": "bash build-crx.sh"
   },
   "devDependencies": {
     "jest": "^29.7.0",

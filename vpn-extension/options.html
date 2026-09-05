@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOVTI VPN - تنظیمات</title>
+  <title>MOVTI VPN Shield - Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -28,31 +28,26 @@
         </svg>
         <div>
           <h1>MOVTI VPN Shield</h1>
-          <span class="header-sub">تنظیمات پیشرفته</span>
+          <span class="header-sub">Settings</span>
         </div>
       </div>
     </header>
 
     <!-- Stats Banner -->
-    <div class="stats-banner" id="stats-banner">
+    <div class="stats-banner">
       <div class="banner-item">
         <span class="banner-value" id="stat-total">--</span>
-        <span class="banner-label">کل سرورها</span>
-      </div>
-      <div class="banner-divider"></div>
-      <div class="banner-item">
-        <span class="banner-value" id="stat-working">--</span>
-        <span class="banner-label">سرور فعال</span>
+        <span class="banner-label">Total</span>
       </div>
       <div class="banner-divider"></div>
       <div class="banner-item">
         <span class="banner-value" id="stat-countries">--</span>
-        <span class="banner-label">کشور</span>
+        <span class="banner-label">Countries</span>
       </div>
       <div class="banner-divider"></div>
       <div class="banner-item">
         <span class="banner-value" id="stat-last-update">--</span>
-        <span class="banner-label">آخرین بروزرسانی</span>
+        <span class="banner-label">Last Update</span>
       </div>
     </div>
 
@@ -64,13 +59,13 @@
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          تنظیمات عمومی
+          General
         </h2>
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">اتصال خودکار</span>
-            <span class="setting-desc">اتصال خودکار هنگام باز کردن مرورگر</span>
+            <span class="setting-label">Auto-connect on startup</span>
+            <span class="setting-desc">Connect to the fastest server when Chrome starts</span>
           </div>
           <label class="toggle">
             <input type="checkbox" id="auto-connect">
@@ -80,8 +75,8 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">کیل سوئیچ</span>
-            <span class="setting-desc">قطع اینترنت در صورت قطع اتصال VPN</span>
+            <span class="setting-label">Kill switch</span>
+            <span class="setting-desc">Block all traffic if VPN tunnel drops</span>
           </div>
           <label class="toggle">
             <input type="checkbox" id="kill-switch">
@@ -91,67 +86,13 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">تست پینگ خودکار</span>
-            <span class="setting-desc">اندازه‌گیری پینگ واقعی سرورها از سیستم شما</span>
+            <span class="setting-label">Geo provider</span>
+            <span class="setting-desc">Service used for country detection</span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" id="auto-ping" checked>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-label">فقط سرورهای فعال</span>
-            <span class="setting-desc">فقط سرورهایی که واقعاً پاسخ می‌دهند نمایش داده شوند</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="working-only" checked>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </section>
-
-      <!-- Connection Settings -->
-      <section class="settings-section">
-        <h2 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          تنظیمات اتصال
-        </h2>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-label">انتخاب خودکار سرور</span>
-            <span class="setting-desc">اتصال به سرور با کمترین پینگ</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="auto-select" checked>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-label">تایم‌اوت اتصال</span>
-            <span class="setting-desc">حداکثر زمان انتظار برای اتصال (ثانیه)</span>
-          </div>
-          <div class="setting-control">
-            <input type="range" id="timeout" min="3" max="15" value="5" class="range-input">
-            <span class="range-value" id="timeout-value">5 ثانیه</span>
-          </div>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-label">حداکثر پینگ مجاز</span>
-            <span class="setting-desc">سرورهای با پینگ بیشتر نمایش داده نشوند</span>
-          </div>
-          <div class="setting-control">
-            <input type="range" id="max-ping" min="100" max="2000" value="1000" step="100" class="range-input">
-            <span class="range-value" id="max-ping-value">1000ms</span>
-          </div>
+          <select id="geo-provider" class="select-input">
+            <option value="ipinfo">ipinfo.io (recommended)</option>
+            <option value="ipapi">ip-api.com (fallback)</option>
+          </select>
         </div>
       </section>
 
@@ -163,20 +104,20 @@
             <line x1="2" y1="12" x2="22" y2="12"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
           </svg>
-          تنظیمات DNS
+          DNS
         </h2>
 
         <div class="dns-options">
           <label class="dns-option">
-            <input type="radio" name="dns" value="default" checked>
+            <input type="radio" name="dns" value="default" id="dns-default">
             <span class="dns-card">
               <span class="dns-icon">🌐</span>
-              <span class="dns-name">پیش‌فرض</span>
-              <span class="dns-value">DNS سیستم</span>
+              <span class="dns-name">Default</span>
+              <span class="dns-value">System DNS</span>
             </span>
           </label>
           <label class="dns-option">
-            <input type="radio" name="dns" value="cloudflare">
+            <input type="radio" name="dns" value="cloudflare" id="dns-cloudflare">
             <span class="dns-card">
               <span class="dns-icon">☁️</span>
               <span class="dns-name">Cloudflare</span>
@@ -184,7 +125,7 @@
             </span>
           </label>
           <label class="dns-option">
-            <input type="radio" name="dns" value="google">
+            <input type="radio" name="dns" value="google" id="dns-google">
             <span class="dns-card">
               <span class="dns-icon">🔍</span>
               <span class="dns-name">Google</span>
@@ -192,7 +133,7 @@
             </span>
           </label>
           <label class="dns-option">
-            <input type="radio" name="dns" value="opendns">
+            <input type="radio" name="dns" value="opendns" id="dns-opendns">
             <span class="dns-card">
               <span class="dns-icon">🛡️</span>
               <span class="dns-name">OpenDNS</span>
@@ -210,49 +151,37 @@
             <line x1="8" y1="21" x2="16" y2="21"/>
             <line x1="12" y1="17" x2="12" y2="21"/>
           </svg>
-          مدیریت سرورها
+          Server List
         </h2>
 
         <div class="proxy-info">
           <div class="info-row">
-            <span class="info-label">منبع داده:</span>
-            <code>best_proxies.json</code>
+            <span class="info-label">Source:</span>
+            <code>cdn.jsdelivr.net/gh/tahatehran/worker-vpn-proxy</code>
           </div>
           <div class="info-row">
-            <span class="info-label">تعداد سرورها:</span>
-            <span id="proxy-count">در حال بارگذاری...</span>
+            <span class="info-label">Servers:</span>
+            <span id="proxy-count">Loading…</span>
           </div>
           <div class="info-row">
-            <span class="info-label">بروزرسانی خودکار:</span>
-            <span>هر 24 ساعت</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">تست پینگ:</span>
-            <span>از سیستم شما</span>
+            <span class="info-label">Auto-refresh:</span>
+            <span>Every 24 hours</span>
           </div>
         </div>
 
         <div class="proxy-actions">
-          <button class="btn-primary" id="btn-test-all">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
-            تست تمام سرورها
-          </button>
-          <button class="btn-secondary" id="btn-update-proxies">
+          <button class="btn-secondary" id="btn-update">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-            بروزرسانی لیست
+            Update list
           </button>
-          <button class="btn-secondary" id="btn-export-proxies">
+          <button class="btn-primary" id="btn-test-all">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
             </svg>
-            خروجی
+            Test all servers
           </button>
         </div>
 
@@ -261,32 +190,32 @@
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
-          <span class="progress-text" id="progress-text">در حال تست...</span>
+          <span class="progress-text" id="progress-text">Testing…</span>
         </div>
 
         <!-- Server Results -->
-        <div class="server-results" id="server-results" style="display:none;">
-          <h3>نتایج تست</h3>
+        <div class="server-results" style="display:block;">
+          <h3>Last Test Results</h3>
           <div id="results-list"></div>
         </div>
       </section>
 
-      <!-- Reset -->
+      <!-- Danger Zone -->
       <section class="settings-section danger-section">
         <h2 class="section-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           </svg>
-          خطرناک
+          Danger Zone
         </h2>
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">بازنشانی تمام تنظیمات</span>
-            <span class="setting-desc">تمام تنظیمات به حالت پیش‌فرض برگردانده می‌شود</span>
+            <span class="setting-label">Reset all settings</span>
+            <span class="setting-desc">Restore defaults and clear saved state</span>
           </div>
-          <button class="btn-danger" id="btn-reset">بازنشانی</button>
+          <button class="btn-danger" id="btn-reset">Reset</button>
         </div>
       </section>
 
@@ -294,14 +223,14 @@
       <section class="settings-section about-section">
         <div class="about-content">
           <h3>MOVTI VPN Shield</h3>
-          <p>نسخه 1.0.0</p>
-          <p class="about-desc">فیلترشکن قدرتمند با رابط کاربری مدرن</p>
+          <p>Version 1.0.3</p>
+          <p class="about-desc">One-click VPN proxy with real ping measurement.</p>
           <div class="about-links">
-            <a href="https://github.com/movtigroup" target="_blank">
+            <a href="https://github.com/tahatehran/vpn-extensions" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
               GitHub
             </a>
-            <a href="https://movtigroup.com" target="_blank">وبسایت</a>
+            <a href="https://tahatehran.github.io/vpn-extensions/privacy" target="_blank" rel="noopener">Privacy Policy</a>
           </div>
         </div>
       </section>

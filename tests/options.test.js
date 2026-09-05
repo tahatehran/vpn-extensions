@@ -11,8 +11,9 @@ beforeAll(() => {
 });
 
 describe("options.js - Source Analysis", () => {
-  test("should define PROXY_SOURCE constant", () => {
+  test("should define PROXY_SOURCE constant (HTTPS)", () => {
     expect(optionsSource).toContain("PROXY_SOURCE");
+    expect(optionsSource).toContain("https://cdn.jsdelivr.net");
   });
 
   test("should have required functions", () => {
@@ -21,8 +22,11 @@ describe("options.js - Source Analysis", () => {
       "saveSettings",
       "loadStats",
       "testAllServers",
-      "testPing",
+      "esc",
+      "updateProxies",
+      "resetSettings",
       "setupEventListeners",
+      "isPrivateHost",
     ];
 
     requiredFunctions.forEach((fn) => {
@@ -42,11 +46,14 @@ describe("options.js - Source Analysis", () => {
     const elements = [
       "auto-connect",
       "kill-switch",
-      "auto-ping",
-      "working-only",
-      "auto-select",
-      "timeout",
-      "max-ping",
+      "geo-provider",
+      "dns-default",
+      "dns-cloudflare",
+      "dns-google",
+      "dns-opendns",
+      "btn-test-all",
+      "btn-update",
+      "btn-reset",
     ];
 
     elements.forEach((el) => {
@@ -56,16 +63,13 @@ describe("options.js - Source Analysis", () => {
 });
 
 describe("options.js - Settings Management", () => {
-  test("should save settings to chrome.storage", () => {
-    expect(optionsSource).toContain("chrome.storage.local.set");
+  test("should save settings to background via SAVE_SETTINGS", () => {
+    expect(optionsSource).toContain("SAVE_SETTINGS");
+    expect(optionsSource).toContain("chrome.runtime.sendMessage");
   });
 
-  test("should load settings from chrome.storage", () => {
-    expect(optionsSource).toContain("chrome.storage.local.get");
-  });
-
-  test("should have fallback to localStorage", () => {
-    expect(optionsSource).toContain("localStorage");
+  test("should load settings from background via GET_STATUS", () => {
+    expect(optionsSource).toContain("GET_STATUS");
   });
 
   test("should have auto-connect setting", () => {
@@ -76,12 +80,16 @@ describe("options.js - Settings Management", () => {
     expect(optionsSource).toContain("killSwitch");
   });
 
-  test("should have DNS setting", () => {
+  test("should have geoProvider setting", () => {
+    expect(optionsSource).toContain("geoProvider");
+  });
+
+  test("should have dns setting", () => {
     expect(optionsSource).toContain("dns");
   });
 
-  test("should have default settings", () => {
-    expect(optionsSource).toContain("defaultSettings");
+  test("should have DEFAULT_SETTINGS object", () => {
+    expect(optionsSource).toContain("DEFAULT_SETTINGS");
   });
 });
 
@@ -91,18 +99,20 @@ describe("options.js - Server Testing", () => {
   });
 
   test("should have progress tracking", () => {
-    expect(optionsSource).toContain("progressFill");
-    expect(optionsSource).toContain("progressText");
+    expect(optionsSource).toContain("progress-fill");
+    expect(optionsSource).toContain("progress-text");
   });
 
   test("should render test results", () => {
-    expect(optionsSource).toContain("resultsList");
-    expect(optionsSource).toContain("innerHTML");
+    expect(optionsSource).toContain("results-list");
   });
 
   test("should have deduplication logic", () => {
-    expect(optionsSource).toContain("Deduplicate");
-    expect(optionsSource).toContain("Map");
+    expect(optionsSource).toContain("new Map");
+  });
+
+  test("should test only top 20 servers", () => {
+    expect(optionsSource).toContain("slice(0, 20)");
   });
 });
 
@@ -111,19 +121,14 @@ describe("options.js - UI Interactions", () => {
     expect(optionsSource).toContain("addEventListener");
   });
 
-  test("should handle export functionality", () => {
-    expect(optionsSource).toContain("btn-export");
-    expect(optionsSource).toContain("download");
+  test("should handle update proxies button", () => {
+    expect(optionsSource).toContain("FORCE_UPDATE");
+    expect(optionsSource).toContain("btn-update");
   });
 
   test("should handle reset functionality", () => {
     expect(optionsSource).toContain("btn-reset");
     expect(optionsSource).toContain("confirm");
-  });
-
-  test("should handle update button", () => {
-    expect(optionsSource).toContain("btn-update-proxies");
-    expect(optionsSource).toContain("FORCE_UPDATE");
   });
 });
 
@@ -141,5 +146,13 @@ describe("options.js - Security", () => {
     secrets.forEach((pattern) => {
       expect(optionsSource).not.toMatch(pattern);
     });
+  });
+
+  test("should use isPrivateHost for URL validation", () => {
+    expect(optionsSource).toContain("isPrivateHost");
+  });
+
+  test("should only use HTTPS for external requests", () => {
+    expect(optionsSource).toMatch(/https:\/\//);
   });
 });

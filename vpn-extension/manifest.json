@@ -1,37 +1,51 @@
 {
   "manifest_version": 3,
   "name": "MOVTI VPN Shield",
-  "version": "1.0.2",
-  "description": "فیلترشکن قدرتمند با رابط کاربری مدرن | Powerful VPN with Modern UI",
+  "short_name": "MOVTI VPN",
+  "version": "1.0.3",
+  "description": "One-click VPN proxy. Routes browser traffic through a remote HTTP proxy of your choice and shows ping. No account, no logs.",
+  "author": {
+    "name": "MOVTI Group",
+    "email": "support@movtigroup.com"
+  },
+  "homepage_url": "https://tahatehran.github.io/vpn-extensions/",
   "permissions": [
     "proxy",
     "storage",
-    "tabs",
-    "activeTab",
     "alarms"
   ],
   "host_permissions": [
-    "<all_urls>",
+    "https://cdn.jsdelivr.net/*",
     "https://api.myip.com/*",
     "https://ipinfo.io/*",
-    "http://ip-api.com/*"
+    "https://ip-api.com/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "popup.html",
+    "default_title": "MOVTI VPN Shield",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
-  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "privacy_policy_url": "https://tahatehran.github.io/privacy"
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://api.myip.com https://ipinfo.io https://ip-api.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self';"
+  },
+  "minimum_chrome_version": "102",
+  "offline_enabled": false,
+  "privacy_policy_url": "https://tahatehran.github.io/vpn-extensions/privacy"
 }

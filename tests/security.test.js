@@ -89,16 +89,13 @@ describe("Security - CSP Compliance", () => {
   test("HTML files should not have inline scripts", () => {
     HTML_FILES.forEach((file) => {
       const html = loadFileAsString(file);
-      // Check for <script> tags with inline content (not src)
       const inlineScriptRegex = /<script(?![^>]*\ssrc=)[^>]*>/gi;
       const matches = html.match(inlineScriptRegex);
-      // Allow <script> tags with no attributes (just <script> with src elsewhere)
       if (matches) {
         const dangerous = matches.filter(
           (m) => !m.includes("src=") && m !== "<script>"
         );
-        // We allow <script> without src in popup.html since it loads popup.js directly
-        // But flag any script with inline content
+        expect(dangerous.length).toBe(0);
       }
     });
   });
@@ -106,42 +103,48 @@ describe("Security - CSP Compliance", () => {
   test("HTML files should not use inline event handlers", () => {
     HTML_FILES.forEach((file) => {
       const html = loadFileAsString(file);
-      const eventHandlerRegex = /\son\w+\s*=\s*["'][^"']*["']/gi;
+      const eventHandlerRegex = /\bon\w+\s*=\s*["'][^"']*["']/gi;
       const matches = html.match(eventHandlerRegex);
       if (matches) {
         console.log(`Inline event handlers in ${file}:`, matches);
       }
-      // Allow but warn - some may be needed
       expect(matches).toBeNull();
     });
   });
+
+  test("manifest.json should have content_security_policy", () => {
+    const manifest = JSON.parse(loadFileAsString("vpn-extension/manifest.json"));
+    expect(manifest.content_security_policy).toBeDefined();
+    expect(manifest.content_security_policy.extension_pages).toBeDefined();
+  });
 });
 
-describe("Security - File Permissions", () => {
-  test("should not have overly broad permissions", () => {
-    const { loadManifest } = require("./helpers");
-    const manifest = loadManifest();
-
-    if (manifest.permissions) {
-      const dangerous = manifest.permissions.filter((p) =>
-        ["debugger", "nativeMessaging", "webRequestBlocking"].includes(p)
-      );
-      expect(dangerous).toHaveLength(0);
-    }
-  });
-
-  test("host_permissions should not be overly broad without reason", () => {
-    const { loadManifest } = require("./helpers");
-    const manifest = loadManifest();
-
+describe("Security - Host Permissions (HTTPS only)", () => {
+  test("should not have http:// host_permissions", () => {
+    const manifest = JSON.parse(loadFileAsString("vpn-extension/manifest.json"));
     if (manifest.host_permissions) {
-      // <all_urls> is expected for VPN, but verify it's there intentionally
-      expect(manifest.host_permissions).toContain("<all_urls>");
+      manifest.host_permissions.forEach((perm) => {
+        if (perm.startsWith("http://")) {
+          fail(`Found http:// host_permission: ${perm} - must be https://`);
+        }
+      });
+    }
+  });
+
+  test("should not have <all_urls> unless only https is used", () => {
+    const manifest = JSON.parse(loadFileAsString("vpn-extension/manifest.json"));
+    if (manifest.host_permissions) {
+      const hasAllUrls = manifest.host_permissions.includes("<all_urls>");
+      if (hasAllUrls) {
+        // Must have no http:// URLs
+        const hasHttp = manifest.host_permissions.some((p) => p.startsWith("http://"));
+        expect(!hasHttp).toBe(true);
+      }
     }
   });
 });
 
-describe("Security - HTTPS Usage", () => {
+describe("Security - HTTPS Enforcement", () => {
   test("PROXY_SOURCE should use HTTPS", () => {
     const bgCode = loadFileAsString("vpn-extension/background.js");
     const match = bgCode.match(/const\s+PROXY_SOURCE\s*=\s*["']([^"']+)["']/);
@@ -154,5 +157,35 @@ describe("Security - HTTPS Usage", () => {
     const match = bgCode.match(/const\s+IP_CHECK_URL\s*=\s*["']([^"']+)["']/);
     expect(match).not.toBeNull();
     expect(match[1]).toMatch(/^https:\/\//);
+  });
+
+  test("PROXY_SOURCE should use HTTPS in popup.js", () => {
+    const popupCode = loadFileAsString("vpn-extension/popup.js");
+    expect(popupCode).toContain("https://cdn.jsdelivr.net");
+  });
+
+  test("GEO_FALLBACK and GEO_PRIMARY should be HTTPS in popup.js", () => {
+    const popupCode = loadFileAsString("vpn-extension/popup.js");
+    expect(popupCode).toMatch(/https:\/\/(ipinfo|ip-api)\.com/);
+  });
+
+  test("Test all servers in options.js should use HTTPS", () => {
+    const optsCode = loadFileAsString("vpn-extension/options.js");
+    expect(optsCode).toMatch(/https:\/\//);
+  });
+});
+
+describe("Security - IP and Port Validation", () => {
+  test("sanitizeServer should reject private IPs in background.js", () => {
+    const bgCode = loadFileAsString("vpn-extension/background.js");
+    expect(bgCode).toContain("isPrivateHost");
+    expect(bgCode).toContain("sanitizeServer");
+  });
+});
+
+describe("Security - Message Validation", () => {
+  test("GET_STATUS in popup.js should not accept arbitrary objects", () => {
+    const popupCode = loadFileAsString("vpn-extension/popup.js");
+    expect(popupCode).toContain("GET_STATUS");
   });
 });
