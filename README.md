@@ -1,7 +1,7 @@
 # MOVTI VPN Shield
 
 [![CI](https://github.com/tahatehran/vpn-extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/tahatehran/vpn-extensions/actions/workflows/ci.yml)
-[![Security](https://img.shields.io/badge/security-audit-passing-brightgreen)](https://github.com/tahatehran/vpn-extensions/actions)
+[![Security](https://github.com/tahatehran/vpn-extensions/actions/workflows/test.yml/badge.svg)](https://github.com/tahatehran/vpn-extensions/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **MOVTI VPN Shield** is a lightweight, privacy-focused browser extension that routes your traffic through a configurable HTTP proxy with real-time ping measurement. No accounts, no logs, no tracking.
